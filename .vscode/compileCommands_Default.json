@@ -1,0 +1,42 @@
+[
+	{
+		"file": "D:\\UnrealProjects\\TRPG\\Source\\TRPG\\TRPG.Build.cs",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\HostX64\\x64\\cl.exe",
+			"@D:\\UnrealProjects\\TRPG\\.vscode\\compileCommands_Default\\TRPG.255.rsp"
+		],
+		"directory": "D:\\Epic Games\\UE_5.1\\Engine\\Source"
+	},
+	{
+		"file": "D:\\UnrealProjects\\TRPG\\Source\\TRPG\\TRPG.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\HostX64\\x64\\cl.exe",
+			"@D:\\UnrealProjects\\TRPG\\.vscode\\compileCommands_Default\\TRPG.255.rsp"
+		],
+		"directory": "D:\\Epic Games\\UE_5.1\\Engine\\Source"
+	},
+	{
+		"file": "D:\\UnrealProjects\\TRPG\\Source\\TRPG\\TRPG.h",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\HostX64\\x64\\cl.exe",
+			"@D:\\UnrealProjects\\TRPG\\.vscode\\compileCommands_Default\\TRPG.255.rsp"
+		],
+		"directory": "D:\\Epic Games\\UE_5.1\\Engine\\Source"
+	},
+	{
+		"file": "D:\\UnrealProjects\\TRPG\\Source\\TRPG\\TRPGGameModeBase.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\HostX64\\x64\\cl.exe",
+			"@D:\\UnrealProjects\\TRPG\\.vscode\\compileCommands_Default\\TRPG.255.rsp"
+		],
+		"directory": "D:\\Epic Games\\UE_5.1\\Engine\\Source"
+	},
+	{
+		"file": "D:\\UnrealProjects\\TRPG\\Source\\TRPG\\TRPGGameModeBase.h",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.34.31933\\bin\\HostX64\\x64\\cl.exe",
+			"@D:\\UnrealProjects\\TRPG\\.vscode\\compileCommands_Default\\TRPG.255.rsp"
+		],
+		"directory": "D:\\Epic Games\\UE_5.1\\Engine\\Source"
+	}
+]
