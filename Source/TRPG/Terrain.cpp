@@ -59,17 +59,22 @@ void ATerrain::CreateMap()
 
 void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 {
+	UE_LOG(LogTemp, Warning, TEXT("==============================================================="));
+	UE_LOG(LogTemp, Warning, TEXT("Function to show all available tiles was called"));
+	// First clean any current available tile
+	CleanAvailableTiles();
+	
 	FVector UnitLocation = ActiveUnit->GetActorLocation();
-	int MinRange = 1;
-	int MaxRange = 1;
+	int MinRange = 0;
+	int MaxRange = 0;
 
 	// Depending on action, set min and max ranges
-	UnitState State = ActiveUnit->GetUnitState();
-	if (State == UnitState::ReadyToMove)
+	EUnitState State = ActiveUnit->GetUnitState();
+	if (State == EUnitState::ReadyToMove)
 	{
 		MaxRange = ActiveUnit->GetMovement();
 	}
-	else if (State == UnitState::ReadyToCombat)
+	else if (State == EUnitState::ReadyToCombat)
 	{
 		MinRange = ActiveUnit->GetCombatActionRangeMin();
 		MaxRange = ActiveUnit->GetCombatActionRangeMax();
@@ -96,7 +101,7 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 			bool bAvailableTile = true;
 
 			// If the action is movement, discard all tiles where there are units
-			if (ActiveUnit->GetUnitState() == UnitState::ReadyToMove)
+			if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove)
 			{
 				for (FVector RestrictedLocation : AllUnitLocations)
 				{
@@ -134,6 +139,8 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 			}
 		}
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("For now, %d tiles were catagorized as possible and %d as obstacles"), PossibleTiles.Num(), ObstacleTiles.Num());
 
 	// Get all the available tiles to this action
 	for (int32 i = 2; i <= MaxRange; i++)
@@ -174,12 +181,16 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("Then, %d tiles were catagorized as available"), AvailableTiles.Num());
+
 	// Delete all tiles limited by the min range
-	// Or when attacking, delete all tiles that can be reached because of an obstacle
-	if (MinRange >= 1 || ActiveUnit->GetUnitState() == UnitState::ReadyToCombat)
+	// Or when attacking, delete all tiles that can't be reached because of an obstacle or a min range
+	if (MinRange >= 1 || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Now, all the tiles that are blocked or are more near than the minrange of %d will be removed"), MinRange);
 		TArray<int32> IndexesToRemove;
-		// Verify in eash obstacle all tiles that are view blocked
+
+		// Verify in each obstacle all tiles that are view-blocked
 		for (int32 i=AvailableTiles.Num()-1; i>=0; --i)
 		{
 			ABaseTile* AvailableTile = AvailableTiles[i];
@@ -191,6 +202,7 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 			if (AvailableTile->GetMovementCost() < MinRange
 				|| GetWorld()->SweepSingleByChannel(HitObstacle, UnitLocation, Destination, FQuat::Identity, ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(1.0f)))
 			{
+				UE_LOG(LogTemp, Warning, TEXT("Remove this tile because its Movement Cost %d is less than the MinRange %d will be removed"), AvailableTile->GetMovementCost(), MinRange);
 				//DrawDebugCylinder(GetWorld(), UnitLocation, Destination, 1.0f, 5, FColor::Red, true, 10.0f);
 				AvailableTile->SetMovementCost(-1);
 				AvailableTiles.RemoveAtSwap(i);
@@ -202,13 +214,28 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 		}
 	}
 	
+	UE_LOG(LogTemp, Warning, TEXT("Finally, %d tiles were catagorized as available"), AvailableTiles.Num());
+
+	int32 EffectIdx = 0;
+	switch (ActiveUnit->GetUnitState())
+	{
+	case EUnitState::ReadyToMove:
+		EffectIdx = 1;
+		break;
+	case EUnitState::ReadyToCombat:
+		EffectIdx = 2;
+		break;
+	default:
+		break;
+	}
+
 	// Show in map the selected tiles
 	for (ABaseTile* Tile : AvailableTiles)
 	{
 		//float PosX = Tile->GetActorLocation().X;
 		//float PosY = Tile->GetActorLocation().Y;
 		//UE_LOG(LogTemp, Warning, TEXT("Posición del Tile seleccionado: x:%f, y:%f"), PosX, PosY);
-		Tile->SetGlowingEffect(true);
+		Tile->SetGlowingEffect(true, EffectIdx);
 	}
 }
 
@@ -230,11 +257,13 @@ bool ATerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 
 bool ATerrain::CheckAvailableTile(FVector EnemyPosition)
 {
+	UE_LOG(LogTemp, Warning, TEXT("Checking if the unit is in an available terrain inside a list of %d tiles"), AvailableTiles.Num());
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
 		FVector EnemyTilePosition = FVector(EnemyPosition.X, EnemyPosition.Y, 0.0f);
 		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("It is in an available terrain"))
 			return true;
 		}
 	}

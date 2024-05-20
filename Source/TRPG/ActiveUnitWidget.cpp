@@ -91,21 +91,21 @@ void UActiveUnitWidget::SetUnitData(ABaseUnit* ActiveUnit)
 		ButtonCombat4->SetIsEnabled(true);
 }
 
-void UActiveUnitWidget::ChangeButtonsState(UnitState NewState)
+void UActiveUnitWidget::ChangeButtonsState(EUnitState NewState)
 {
 	// Disable buttons according to state
 	switch (NewState)
 	{
-	case UnitState::Idle:
+	case EUnitState::Idle:
 		break;
-	case UnitState::ReadyToMove:
+	case EUnitState::ReadyToMove:
 		break;
-	case UnitState::Moving:
+	case EUnitState::Moving:
 		ButtonMove->SetIsEnabled(false);
 		break;
-	case UnitState::ReadyToCombat:
+	case EUnitState::ReadyToCombat:
 		break;
-	case UnitState::Combating:
+	case EUnitState::Combating:
 		ButtonCombat0->SetIsEnabled(false);
 		ButtonCombat1->SetIsEnabled(false);
 		ButtonCombat2->SetIsEnabled(false);

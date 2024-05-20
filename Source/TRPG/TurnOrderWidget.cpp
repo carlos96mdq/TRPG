@@ -9,7 +9,6 @@
 
 void UTurnOrderWidget::NativeConstruct()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UTurnOrderWidget::NativeConstruct"));
 	Super::NativeConstruct();
 
 	GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &UTurnOrderWidget::SetTurnOrder);

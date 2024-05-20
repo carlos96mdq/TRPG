@@ -10,7 +10,7 @@
 class UButton;
 class UTextBlock;
 class ABaseUnit;
-enum class UnitState : uint8;
+enum class EUnitState : uint8;
 
 /**
  * 
@@ -43,7 +43,7 @@ protected:
 	void SetUnitData(ABaseUnit* ActiveUnit);
 	
 	// Binded to ActiveUnit state changed function in PlayerState to refresh buttons in widget
-	void ChangeButtonsState(UnitState NewState);
+	void ChangeButtonsState(EUnitState NewState);
 
 public:
 	// Buttons

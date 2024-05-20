@@ -25,8 +25,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void NativeConstruct() override;
 
-	UFUNCTION()
-	void PlayPressed();
+	//UFUNCTION()
+	//void PlayPressed();
 
 public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
@@ -38,9 +38,9 @@ public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UTurnOrderWidget* TurnOrderWidget;
 	
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UImage* LoadScreen;
-	
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UButton* PlayButton;
+	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	//UImage* LoadScreen;
+
+	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	//UButton* PlayButton;
 };

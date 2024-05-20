@@ -10,6 +10,9 @@
 class ABaseUnit;
 class UActiveUnitWidget;
 class UHUDWidget;
+class UInputMappingContext;
+class UInputAction;
+struct FInputActionInstance;
 
 /**
  * 
@@ -23,6 +26,8 @@ class TRPG_API ATRPGPlayerController : public APlayerController
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual void PostInitializeComponents() override;
 
 	// Called when mouse left button is clicked
 	// This action take the actor under the mouse cursor and send the data to PlayerState to procces an action
@@ -38,9 +43,12 @@ protected:
 	// PlayerHUD widget
 	UHUDWidget* HUDWidget;
 
+	// MainArena Camera	--TODO esto deberia ver donde ponerlo, lo mejor creo que seria spawnearlo en el PlayerState, ahora lo dejo aca para probar facilmente
+	ACameraActor* MainCamera;
+
 public:
 	// Allows the PlayerController to set up custom input bindings
-	void SetupInputComponent();
+	virtual void SetupInputComponent() override;
 
 	// Called by action widget when a Combat action was selected and pressed
 	void OnCombatAction(int32 ActionPosition);
@@ -50,6 +58,12 @@ public:
 	
 	// Called by action widget when Wait action is pressed
 	void OnWaitAction();
+
+	// Called when players press action to move camera
+	void OnMoveCameraAction(const FInputActionInstance& Instance);
+
+	// Called when players press action to zoom camera
+	void OnZoomCameraAction(const FInputActionInstance& Instance);
 
 	// User Widget class used to spawn widgets in the world
 	UPROPERTY(EditDefaultsOnly)
@@ -63,5 +77,15 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 
-	
+	// Input Mapping Context asset for the Enhanced Input System
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TSoftObjectPtr<UInputMappingContext> InputMapping;
+
+	// Input Action to move the camera
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TSoftObjectPtr<UInputAction> MoveCameraInputAction;
+
+	// Input Action to zoom the camera
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TSoftObjectPtr<UInputAction> ZoomCameraInputAction;
 };

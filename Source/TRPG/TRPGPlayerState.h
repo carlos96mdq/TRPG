@@ -10,10 +10,10 @@
 class ABaseUnit;
 class ATerrain;
 class APlayerStash;
-enum class UnitState : uint8;
+enum class EUnitState : uint8;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitSelected, ABaseUnit*)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnStateChanged, UnitState)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnStateChanged, EUnitState)
 
 /**
  * 
@@ -24,6 +24,8 @@ class TRPG_API ATRPGPlayerState : public APlayerState
 	GENERATED_BODY()
 	
 protected:
+	virtual void PostInitializeComponents() override;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -35,6 +37,9 @@ protected:
 
 	// Own unit selected at the moment
 	ABaseUnit* SelectedUnit;
+
+	// Reference to the MainCamera
+
 
 public:
 
@@ -55,7 +60,7 @@ public:
 	void ReverseState(UUserWidget* CombatPlayerWidget);
 
 	// Change the CurrentState
-	void ChangeState(UnitState NewState, int32 ActionPosition = -1);
+	void ChangeState(EUnitState NewState, int32 ActionPosition = -1);
 
 	// Called by widget when move button is pressed
 	void CheckMovement(UUserWidget* CombatPlayerWidget);

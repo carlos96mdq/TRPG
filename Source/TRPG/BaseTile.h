@@ -34,9 +34,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	USceneComponent* DefaultRootComponent;
 
-	// Glowing component
+	// Glowing components
 	UPROPERTY(EditDefaultsOnly)
-	UStaticMeshComponent* GlowingEffect;
+	UStaticMeshComponent* GlowingEffectMovement;
+	
+	UPROPERTY(EditDefaultsOnly)
+	UStaticMeshComponent* GlowingEffectCombat;
 	
 	// Glowing component
 	UPROPERTY(EditDefaultsOnly)
@@ -57,7 +60,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Set the glowing effect on/off
-	void SetGlowingEffect(bool bNewState=true);
+	void SetGlowingEffect(bool bNewState=true, int32 EffectIdx=0);
 
 	// Set the movement cost at the moment
 	void SetMovementCost(int NewCost);

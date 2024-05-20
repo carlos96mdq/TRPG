@@ -19,9 +19,9 @@ class TRPG_API ATerrain : public AActor
 	void CreateMap();
 
 	// Tiles quantity that map uses
-	int32 MapMaxRows = 32;
-	int32 MapMaxColumns = 32;
-	float TileSize = 200.0f;
+	int32 MapMaxRows = 9;
+	int32 MapMaxColumns = 9;
+	float TileSize = 200.0f;	//TODO esto deberia obtenerlo desde una constante en game state para luego obtenerla en TODOS lados
 
 	// Array of tiles that compound the current map
 	TArray<ABaseTile*> TilesArray;

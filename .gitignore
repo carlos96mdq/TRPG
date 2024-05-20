@@ -73,3 +73,10 @@ Plugins/*/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Content that doesn't need to be committed
+Content/ParagonGreystone/*
+
+# For now, only the imported assest will be committed, but not the source (for example fbx and dae for models)
+*.fbx
+*.dae

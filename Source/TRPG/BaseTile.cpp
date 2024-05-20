@@ -11,9 +11,13 @@ ABaseTile::ABaseTile()
 	DefaultRootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultRootComponent"));
 	SetRootComponent(DefaultRootComponent);
 
-	GlowingEffect = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlowingEffect"));
-	GlowingEffect->SetupAttachment(RootComponent);
-	GlowingEffect->SetVisibility(false);
+	GlowingEffectMovement = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlowingEffectMovement"));
+	GlowingEffectMovement->SetupAttachment(RootComponent);
+	GlowingEffectMovement->SetVisibility(false);
+	
+	GlowingEffectCombat = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GlowingEffectCombat"));
+	GlowingEffectCombat->SetupAttachment(RootComponent);
+	GlowingEffectCombat->SetVisibility(false);
 	
 	MouseOverEffect = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MouseOverEffect"));
 	MouseOverEffect->SetupAttachment(RootComponent);
@@ -50,11 +54,24 @@ void ABaseTile::OnTileClicked(AActor* ClickedActor, FKey ButtonPressed)
 void ABaseTile::OnTileMouseOver(AActor* OverActor)
 {
 	MouseOverEffect->ToggleVisibility();
+	UE_LOG(LogTemp, Warning, TEXT("This tile Movement Cost is %d"), MovementCost);
 }
 
-void ABaseTile::SetGlowingEffect(bool bNewState)
+void ABaseTile::SetGlowingEffect(bool bNewState, int32 EffectIdx)
 {
-	GlowingEffect->SetVisibility(bNewState);
+	switch (EffectIdx)
+	{
+	case 1:
+		GlowingEffectMovement->SetVisibility(bNewState);
+		break;
+	case 2:
+		GlowingEffectCombat->SetVisibility(bNewState);
+		break;
+	default:
+		GlowingEffectMovement->SetVisibility(bNewState);
+		GlowingEffectCombat->SetVisibility(bNewState);
+		break;
+	}
 }
 
 void ABaseTile::SetMovementCost(int NewCost)

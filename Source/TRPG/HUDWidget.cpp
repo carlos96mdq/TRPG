@@ -16,19 +16,21 @@ void UHUDWidget::NativeConstruct()
 	ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
 	SelectedUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
 	TurnOrderWidget->SetVisibility(ESlateVisibility::Collapsed);
+	//LoadScreen->SetVisibility(ESlateVisibility::Visible);
 
-	PlayButton->OnClicked.AddUniqueDynamic(this, &UHUDWidget::PlayPressed);
+	//PlayButton->OnClicked.AddUniqueDynamic(this, &UHUDWidget::PlayPressed);
 }
 
-void UHUDWidget::PlayPressed()
-{
-	// Close Load Screen
-	//PlayButton->SetVisibility(ESlateVisibility::Collapsed);
-	//LoadScreen->SetVisibility(ESlateVisibility::Collapsed);
-	PlayButton->RemoveFromParent();
-	LoadScreen->RemoveFromParent();
-
-	// Starts the turn system
-	// TODO: Esto lo handleo directamente acá para hacer pruebas. Lo ideal sería que esto vaya al PlayerController y este se encargara de mandar la orden
-	GetWorld()->GetGameState<ATRPGGameStateBase>()->StartGame();
-}
+//void UHUDWidget::PlayPressed()
+//{
+//	// Close Load Screen
+//	PlayButton->SetVisibility(ESlateVisibility::Collapsed);
+//	LoadScreen->SetVisibility(ESlateVisibility::Collapsed);
+//	PlayButton->RemoveFromParent();
+//	LoadScreen->RemoveFromParent();
+//
+//	// Starts the turn system
+//	// TODO: Esto lo handleo directamente acá para hacer pruebas. Lo ideal sería que esto vaya al PlayerController y este se encargara de mandar la orden
+//	// TODO: Lo dejo de muestra, pero como no tengo mas el boton Play esto ya no va más
+//	GetWorld()->GetGameState<ATRPGGameStateBase>()->StartGame();
+//}

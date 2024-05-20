@@ -2,6 +2,7 @@
 
 
 #include "BaseUnit.h"
+#include "Animation/AnimInstance.h"
 
 ABaseUnit::ABaseUnit()
 {
@@ -11,6 +12,10 @@ ABaseUnit::ABaseUnit()
 	// Create Skeleton Component to attach a SkeletonMesh to this unit
 	Model3DComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Body"));
 	Model3DComponent->SetupAttachment(RootComponent);
+
+	// Create Animator Component
+	//Model3DComponent->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	
 	//Model3DComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 }
 
@@ -24,7 +29,7 @@ void ABaseUnit::BeginPlay()
 	Super::BeginPlay();
 
 	// Get data linked to Unit Name and save it
-	FUnits* BaseStats = UnitsTable->FindRow<FUnits>(Archetype, "", true);
+	BaseStats = UnitsTable->FindRow<FUnits>(Archetype, "", true);
 	check(BaseStats);
 	
 	// Set unit resistances using the just aquired type
@@ -34,13 +39,14 @@ void ABaseUnit::BeginPlay()
 	// Load and reference assets needed
 	Icon = BaseStats->Icon.LoadSynchronous();
 	Model3D = BaseStats->Model3D.LoadSynchronous();
+	AnimationBP = BaseStats->AnimationBP.LoadSynchronous();
 
 	// Set variable stats using the base stats
 	Health = BaseStats->MaxHealth;
-	Energy = BaseStats->MaxEnergy;
+	Armor = BaseStats->NaturalArmor;
 
 	//TODO inicializo las pasivas manualmente, esto deberia venir como data de algun lado
-	KnownPassives.Add("Pasiva_test");
+	//KnownPassives.Add("Pasiva_test");
 
 	//TODO PLACEHOLDER inicializo la tabla de acciones con algo cargado para pruebas
 	EquippedCombatActions.Init(-1, 5);
@@ -48,6 +54,63 @@ void ABaseUnit::BeginPlay()
 
 	// Set SkeletonMesh from datatable
 	Model3DComponent->SetSkeletalMesh(Model3D);
+	
+	// Set Animator from datatable
+	//Model3DComponent->SetAnimClass(Animation);
+	if (AnimationBP)
+	{
+		Model3DComponent->SetAnimClass(AnimationBP->GeneratedClass);
+	}
+	//Model3DComponent->SetAnimClass(AnimationBP->GetClass());
+	//Model3DComponent->SetAnimInstance(Animation);
+}
+
+void ABaseUnit::TurnStarts()
+{
+	// Check if the unit loses its turn
+
+	// Reset the Unit's armor if left
+
+}
+
+void ABaseUnit::TurnEnds()
+{
+	// Add Unit natural Armor to its Armor
+
+	// List of Active Effects to remove because they wasted
+	TArray<EEffectName> EffectsToRemove;
+
+	// Check for damage coming from Burn or Poison effects and reduce their effects
+	for (TTuple<EEffectName, int32> &Effect : ActiveEffects)
+	{
+		if (Effect.Key == EEffectName::Burn || Effect.Key == EEffectName::Poison)
+		{
+			ApplyDamage(Effect.Value);
+			UE_LOG(LogTemp, Warning, TEXT("This unit receives %d damage points from an effect"), Effect.Value);
+			Effect.Value--;
+			if (Effect.Value <= 0)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("This effect counter reached 0 so the effect disappears"));
+				EffectsToRemove.Emplace(Effect.Key);
+				//ActiveEffects.Remove(EEffectName::Burn);
+			}
+		}
+	}
+
+	// Remove all effects that finished
+	for (EEffectName EffectName : EffectsToRemove)
+		ActiveEffects.Remove(EffectName);
+
+	//for (FActiveEffect *AE : ActiveEffects)
+	//{
+	//	switch (AE->Name)
+	//	{
+	//		case Burn: 
+	//			HandleBurn(AE);
+	//		break
+	//	}
+	//}
+
 }
 
 void ABaseUnit::OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed)
@@ -63,33 +126,48 @@ void ABaseUnit::Move(float DeltaTime)
 		GetActorLocation(),
 		Destination,
 		DeltaTime,
-		1000
+		600
 	);
-
+	
 	SetActorLocation(NextStep);
+
+	// Rotate
+	FVector MovementDirection = Destination - GetActorLocation();
+	MovementDirection = MovementDirection.GetSafeNormal();
+	if (MovementDirection != FVector::ZeroVector)
+	{
+		FRotator NewRotation = MovementDirection.Rotation();
+		//FRotator InterpolatedRotation = FMath::RInterpTo(GetActorRotation(), NewRotation, DeltaTime, InterpSpeed);
+		SetActorRotation(NewRotation);
+	}
 
 	// Verify if the unit reached the current destination and if there are new ones to reach
 	if (GetActorLocation() == Destination)
 	{
 		if (!QueueDestinations.Dequeue(Destination))
 		{
-			CurrentState = UnitState::Idle;
+			CurrentState = EUnitState::Idle;
 		}
 	}
 }
 
-void ABaseUnit::AddTypeModifiers(UnitType NewType)
+void ABaseUnit::AddTypeModifiers(EUnitType NewType)
 {
 }
 
 void ABaseUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	if (CurrentState == UnitState::Moving)
+	
+	if (CurrentState == EUnitState::Moving)
 	{
 		Move(DeltaTime);
 	}
+
+	FVector Speed = GetVelocity();
+	//UE_LOG(LogTemp, Warning, TEXT("La Velocidad de mi unidad es: x: %x, y: %y, z: %z"));
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 300, FColor::Red, false, 2.0f, 0, 1.0f);
+	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorRightVector() * 300, FColor::Green, false, 2.0f, 0, 1.0f);
 }
 
 void ABaseUnit::MoveUnit(FVector FinalDestination)
@@ -121,7 +199,7 @@ void ABaseUnit::SetCombatAction(int32 ActionId)
 	check(ActionId >= 0 && ActionId <= 4 && EquippedCombatActions[ActionId] >= 0 && EquippedCombatActions[ActionId] < KnownCombatActions.Num());
 
 	// Get action data from data table
-	CurrentCombatAction = CombatActionsTable->FindRow<FCombatActionsStruct>(KnownCombatActions[EquippedCombatActions[ActionId]], "", true);
+	CurrentCombatAction = CombatActionsTable->FindRow<FCombatActions>(KnownCombatActions[EquippedCombatActions[ActionId]], "", true);
 	check(CurrentCombatAction);
 }
 
@@ -135,8 +213,8 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	bool IsCritic = false;
 	bool IsSuccess = false;
 	int32 HitChanceDie = FMath::RandRange(1, 100);
-	int32 HitThreshold = GetUnitStat(UnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(UnitStats::DoggingChance);
-	int32 CriticThreshold = GetUnitStat(UnitStats::CriticChance);
+	int32 HitThreshold = GetUnitStat(EUnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(EUnitStats::DoggingChance);
+	int32 CriticThreshold = GetUnitStat(EUnitStats::CriticChance);	//TODO ver el tema del critico
 	
 	// If it is a critic it allways hit, don't matter the objective DoggingChance 
 	if (HitChanceDie <= CriticThreshold)
@@ -150,13 +228,28 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 		UE_LOG(LogTemp, Warning, TEXT("Attack hits"));
 		// Calculate the final damage to apply to objective
 		// Get damage generated by the attacker
-		int32 Damage = CurrentCombatAction->Power + FMath::Floor((CurrentCombatAction->StrenghtMod * GetUnitStat(UnitStats::StrenghtPower) + CurrentCombatAction->DexterityMod * GetUnitStat(UnitStats::DexterityPower) + CurrentCombatAction->SpecialMod * GetUnitStat(UnitStats::DivinePower)) / 100);
+		int32 Damage = CurrentCombatAction->Power;
+		
+		switch (CurrentCombatAction->Modifier)
+		{
+		case EDamageModifier::Strenght:
+			Damage += GetUnitStat(EUnitStats::Strenght);
+			break;
+		case EDamageModifier::Dexterity:
+			Damage += GetUnitStat(EUnitStats::Dexterity);
+			break;
+		case EDamageModifier::Special:
+			Damage += GetUnitStat(EUnitStats::Special);
+			break;
+		default:
+			break;
+		}
+
 		if (IsCritic)
 			Damage = FMath::Floor(Damage * 1.5);
 
 		// Reduce damage from the objective armor
-		Damage -= Objective->GetUnitStat(UnitStats::Armor);
-		//Damage = FMath::Floor(Damage * (1 - Objective->GetStatArmor() / 100));
+		Damage -= Objective->GetUnitStat(EUnitStats::Armor);
 
 		// Check for resistance in objective
 		//int32 Resistance = GetStatResistance(CurrentCombatAction->DamageType);
@@ -175,10 +268,10 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 				// Set the effect's objective because it can be different than the attack/skill objective
 				switch (Effect.Objective)
 				{
-				case ObjectiveType::User:
+				case EObjectiveType::User:
 					EffectObjective = this;
 					break;
-				case ObjectiveType::Enemy:
+				case EObjectiveType::Enemy:
 					EffectObjective = Objective;
 					break;
 				default:
@@ -186,19 +279,20 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 					break;
 				}
 
-				// Apply the effect according to the type
-				switch (Effect.Type)
+				// Check for chance
+				int32 Chance = Effect.Chance;
+				int32 ChanceDie = FMath::RandRange(1, 100);
+
+				if (ChanceDie <= Chance)
 				{
-				case EffectType::Status:
-					//TODO chequear si el objetivo es inmune
-					//TODO en caso de no ser inmune o resistirse, aplicarle el status
-					break;
-				case EffectType::Stats:
-					//TODO chequear si el objetivo es inmune
-					//TODO en caso de no ser inmune o resistirse, aplicarle el status
-					break;
-				default:
-					break;
+					EffectObjective->ApplyEffect(Effect.Name, Effect.Value);
+
+					//UE_LOG(LogTemp, Warning, TEXT("Apply the Combat Action Effect to the objective unit"));
+					//// Apply effect to objective unit
+					//if (ActiveEffects.Contains(Effect.Name))
+					//	ActiveEffects[Effect.Name] += Effect.Value;
+					//else
+					//	ActiveEffects.Add(Effect.Name, Effect.Value);
 				}
 			}
 		}
@@ -207,10 +301,6 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack missed"));
 	}
-
-	
-
-	// TODO Remove effects that only last for this action
 }
 
 void ABaseUnit::ApplyDamage(int32 Damage)
@@ -220,7 +310,17 @@ void ABaseUnit::ApplyDamage(int32 Damage)
 	UE_LOG(LogTemp, Warning, TEXT("Current Health: %d"), Health);
 }
 
-void ABaseUnit::SetUnitState(UnitState NewState)
+void ABaseUnit::ApplyEffect(EEffectName EffectName, int32 Value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Apply the Combat Action Effect to this objective unit"));
+	// Apply effect to objective unit
+	if (ActiveEffects.Contains(EffectName))
+		ActiveEffects[EffectName] += Value;
+	else
+		ActiveEffects.Add(EffectName, Value);
+}
+
+void ABaseUnit::SetUnitState(EUnitState NewState)
 {
 	CurrentState = NewState;
 }
@@ -228,7 +328,7 @@ void ABaseUnit::SetUnitState(UnitState NewState)
 bool ABaseUnit::HasActionEquipped(int32 CombatActionSlot) const
 {
 	UE_LOG(LogTemp, Warning, TEXT("HasActionEquipped"));
-	UE_LOG(LogTemp, Warning, TEXT("CombatActionSlot: %d, KnownCombatActions: %d"), CombatActionSlot, EquippedCombatActions[CombatActionSlot]);
+	//UE_LOG(LogTemp, Warning, TEXT("CombatActionSlot: %d, KnownCombatActions: %d"), CombatActionSlot, EquippedCombatActions[CombatActionSlot]);
 	check(CombatActionSlot >= 0 && CombatActionSlot <= 4);
 	if (EquippedCombatActions[CombatActionSlot] >= 0 && EquippedCombatActions[CombatActionSlot] < KnownCombatActions.Num())
 		return true;
@@ -236,202 +336,134 @@ bool ABaseUnit::HasActionEquipped(int32 CombatActionSlot) const
 		return false;
 }
 
-const int32 ABaseUnit::GetUnitStat(UnitStats Stat)
+const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 {
 	int32 StatValue = 0;
 	
 	// Add base value coming from unit archetype base stats
 	switch (Stat)
 	{
-	case UnitStats::Health:
-		StatValue += BaseStats->MaxHealth;
-		break;
-	case UnitStats::Energy:
-		StatValue += BaseStats->MaxEnergy;
-		break;
-	case UnitStats::Armor:
-		StatValue += BaseStats->Armor;
-		break;
-	case UnitStats::StrenghtPower:
-		StatValue += BaseStats->StrenghtPower;
-		break;
-	case UnitStats::DexterityPower:
-		StatValue += BaseStats->DexterityPower;
-		break;
-	case UnitStats::DivinePower:
-		StatValue += BaseStats->DivinePower;
-		break;
-	case UnitStats::Velocity:
-		StatValue += BaseStats->Velocity;
-		break;
-	case UnitStats::Accuracy:
-		StatValue += BaseStats->Accuracy;
-		break;
-	case UnitStats::CriticChance:
-		StatValue += BaseStats->CriticChance;
-		break;
-	case UnitStats::DoggingChance:
-		StatValue += BaseStats->DoggingChance;
-		break;
-	default:
-		break;
+		case EUnitStats::Health:
+			StatValue += BaseStats->MaxHealth;
+			break;
+		case EUnitStats::Armor:
+			StatValue += BaseStats->NaturalArmor;
+			break;
+		case EUnitStats::Strenght:
+			StatValue += BaseStats->Strenght;
+			if (ActiveEffects.Contains(EEffectName::Strenght))
+				StatValue = ActiveEffects[EEffectName::Strenght];
+			UE_LOG(LogTemp, Warning, TEXT("This unit Strenght value is %d"), StatValue);
+			break;
+		case EUnitStats::Dexterity:
+			StatValue += BaseStats->Dexterity;
+			if (ActiveEffects.Contains(EEffectName::Dexterity))
+				StatValue = ActiveEffects[EEffectName::Dexterity];
+			break;
+		case EUnitStats::Special:
+			StatValue += BaseStats->Special;
+			if (ActiveEffects.Contains(EEffectName::Special))
+				StatValue = ActiveEffects[EEffectName::Special];
+			break;
+		case EUnitStats::Velocity:
+			StatValue += BaseStats->Velocity;
+			break;
+		default:
+			break;
 	}
 
 	// Add values coming from unit pasives
-	for (FName PassiveName : KnownPassives)
-	{
-		FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
-		check(Passive);
+	//for (FName PassiveName : KnownPassives)
+	//{
+	//	FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
+	//	check(Passive);
 
-		if (Passive->Type == PassiveType::Start)
-		{
-			for (const FEffects& Effect : Passive->Effects)
-			{
-				// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
-				if (Effect.Type == EffectType::Stats && Effect.SubType == (uint8)Stat && (Effect.Objective == ObjectiveType::User || Effect.Objective == ObjectiveType::Allies))
-				{
-					if (Effect.IsValuePercent)
-					{
-						StatValue = FMath::Floor(StatValue * (1 + Effect.Value / 100));
-					}
-					else
-					{
-						StatValue += Effect.Value;
-					}
-				}
-			}
-		}
-	}
+	//	if (Passive->Type == EPassiveType::Start)
+	//	{
+	//		for (const FEffects& Effect : Passive->Effects)
+	//		{
+	//			// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
+	//			if (Effect.Type == EEffectName::Stats && Effect.SubType == (uint8)Stat && (Effect.Objective == EObjectiveType::User || Effect.Objective == EObjectiveType::Allies))
+	//			{
+	//				if (Effect.IsValuePercent)
+	//				{
+	//					StatValue = FMath::Floor(StatValue * (1 + Effect.Value / 100));
+	//				}
+	//				else
+	//				{
+	//					StatValue += Effect.Value;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 
 	//TODO a eso agregarle cualquier modificacion surgida por el equipamiento
 
-	//TODO finalmente tener en cuenta cualquier status que pueda afectar
+	// TODO Depending on the stat check for different active status that modify that stat
+
 
 	return StatValue;
 }
 
-const int32 ABaseUnit::GetUnitResistance(UnitResistances DamageType)
+const int32 ABaseUnit::GetUnitResistance(EUnitType DamageType)
 {
 	int32 ResistanceValue = 0;
 
-	// Add base value coming from unit archetype base stats
-	switch (DamageType)
-	{
-	case UnitResistances::Slashing:
-		ResistanceValue += BaseStats->Resistances.Slashing;
-		break;
-	case UnitResistances::Bludgeoning:
-		ResistanceValue += BaseStats->Resistances.Bludgeoning;
-		break;
-	case UnitResistances::Piercing:
-		ResistanceValue += BaseStats->Resistances.Piercing;
-		break;
-	case UnitResistances::Fire:
-		ResistanceValue += BaseStats->Resistances.Fire;
-		break;
-	case UnitResistances::Poison:
-		ResistanceValue += BaseStats->Resistances.Poison;
-		break;
-	case UnitResistances::Lightning:
-		ResistanceValue += BaseStats->Resistances.Lightning;
-		break;
-	default:
-		break;
-	}
+	// Add base value coming from unit archetype base stats	//TODO esto queda comentado para futuro, pero por ahora la resistencia no se almacena en el data asset, sino que depende al tipo de la unidad
+	//switch (DamageType)
+	//{
+	//case EUnitResistances::Slashing:
+	//	ResistanceValue += BaseStats->Resistances.Slashing;
+	//	break;
+	//case EUnitResistances::Bludgeoning:
+	//	ResistanceValue += BaseStats->Resistances.Bludgeoning;
+	//	break;
+	//case EUnitResistances::Piercing:
+	//	ResistanceValue += BaseStats->Resistances.Piercing;
+	//	break;
+	//case EUnitResistances::Fire:
+	//	ResistanceValue += BaseStats->Resistances.Fire;
+	//	break;
+	//case EUnitResistances::Poison:
+	//	ResistanceValue += BaseStats->Resistances.Poison;
+	//	break;
+	//case EUnitResistances::Lightning:
+	//	ResistanceValue += BaseStats->Resistances.Lightning;
+	//	break;
+	//default:
+	//	break;
+	//}
 
 	// Add values coming from unit pasives
-	for (FName PassiveName : KnownPassives)
-	{
-		FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
-		check(Passive);
+	//for (FName PassiveName : KnownPassives)
+	//{
+	//	FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
+	//	check(Passive);
 
-		if (Passive->Type == PassiveType::Start)
-		{
-			for (const FEffects& Effect : Passive->Effects)
-			{
-				// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
-				if (Effect.Type == EffectType::Resistances && Effect.SubType == (uint8)DamageType && (Effect.Objective == ObjectiveType::User || Effect.Objective == ObjectiveType::Allies))
-				{
-					if (Effect.IsValuePercent)
-					{
-						ResistanceValue = FMath::Floor(ResistanceValue * (1 + Effect.Value / 100));
-					}
-					else
-					{
-						ResistanceValue += Effect.Value;
-					}
-				}
-			}
-		}
-	}
+	//	if (Passive->Type == EPassiveType::Start)
+	//	{
+	//		for (const FEffects& Effect : Passive->Effects)
+	//		{
+	//			// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
+	//			if (Effect.Type == EEffectName::Resistances && Effect.SubType == (uint8)DamageType && (Effect.Objective == EObjectiveType::User || Effect.Objective == EObjectiveType::Allies))
+	//			{
+	//				if (Effect.IsValuePercent)
+	//				{
+	//					ResistanceValue = FMath::Floor(ResistanceValue * (1 + Effect.Value / 100));
+	//				}
+	//				else
+	//				{
+	//					ResistanceValue += Effect.Value;
+	//				}
+	//			}
+	//		}
+	//	}
+	//}
 
 	//TODO a eso agregarle cualquier modificacion surgida por el equipamiento
 
 	//TODO finalmente tener en cuenta cualquier status que pueda afectar
 
 	return ResistanceValue;
-}
-
-const int32 ABaseUnit::GetStatResistance(UnitType DamageType)
-{
-	switch (DamageType)
-	{
-	case UnitType::Bug:
-		return BaseStats.Resistances.Bug + ModifierStats.Resistances.Bug;
-		break;
-	case UnitType::Dark:
-		return BaseStats.Resistances.Dark + ModifierStats.Resistances.Dark;
-		break;
-	case UnitType::Dragon:
-		return BaseStats.Resistances.Dragon + ModifierStats.Resistances.Dragon;
-		break;
-	case UnitType::Electric:
-		return BaseStats.Resistances.Electric + ModifierStats.Resistances.Electric;
-		break;
-	case UnitType::Fairy:
-		return BaseStats.Resistances.Fairy + ModifierStats.Resistances.Fairy;
-		break;
-	case UnitType::Fighting:
-		return BaseStats.Resistances.Fighting + ModifierStats.Resistances.Fighting;
-		break;
-	case UnitType::Fire:
-		return BaseStats.Resistances.Fire + ModifierStats.Resistances.Fire;
-		break;
-	case UnitType::Flying:
-		return BaseStats.Resistances.Flying + ModifierStats.Resistances.Flying;
-		break;
-	case UnitType::Ghost:
-		return BaseStats.Resistances.Ghost + ModifierStats.Resistances.Ghost;
-		break;
-	case UnitType::Grass:
-		return BaseStats.Resistances.Grass + ModifierStats.Resistances.Grass;
-		break;
-	case UnitType::Ground:
-		return BaseStats.Resistances.Ground + ModifierStats.Resistances.Ground;
-		break;
-	case UnitType::Ice:
-		return BaseStats.Resistances.Ice + ModifierStats.Resistances.Ice;
-		break;
-	case UnitType::Normal:
-		return BaseStats.Resistances.Normal + ModifierStats.Resistances.Normal;
-		break;
-	case UnitType::Poison:
-		return BaseStats.Resistances.Poison + ModifierStats.Resistances.Poison;
-		break;
-	case UnitType::Psychic:
-		return BaseStats.Resistances.Psychic + ModifierStats.Resistances.Psychic;
-		break;
-	case UnitType::Rock:
-		return BaseStats.Resistances.Rock + ModifierStats.Resistances.Rock;
-		break;
-	case UnitType::Steel:
-		return BaseStats.Resistances.Steel + ModifierStats.Resistances.Steel;
-		break;
-	case UnitType::Water:
-		return BaseStats.Resistances.Water + ModifierStats.Resistances.Water;
-		break;
-	default:
-		return 0;
-		break;
-	}
 }

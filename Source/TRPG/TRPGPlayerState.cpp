@@ -8,13 +8,20 @@
 #include "PlayerStash.h"
 #include "TRPGGameStateBase.h"
 
+void ATRPGPlayerState::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &ATRPGPlayerState::SetActiveUnit);
+}
+
 void ATRPGPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
 	PlayerStash = GetWorld()->SpawnActor<APlayerStash>();
 
-	GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &ATRPGPlayerState::SetActiveUnit);
+	//GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &ATRPGPlayerState::SetActiveUnit);
 }
 
 void ATRPGPlayerState::SetTerrain(ATerrain* TerrainPointer)
@@ -36,12 +43,12 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 		return;
 
 	// First depending if a unit is selected what happens
-	if (ActiveUnit->GetUnitState() == UnitState::ReadyToMove || ActiveUnit->GetUnitState() == UnitState::ReadyToCombat)
+	if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
 	{
 		// Process the click handled by the PlayerController according to the unit state
 		switch (ActiveUnit->GetUnitState())
 		{
-		case UnitState::ReadyToMove:
+		case EUnitState::ReadyToMove:
 			if (ABaseTile* DestinationTile = Cast<ABaseTile>(HitResult.GetActor()))
 			{
 				if (Terrain->CheckAvailableTile(DestinationTile))
@@ -49,22 +56,30 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 					TArray<FVector> TilesPath = Terrain->GetPath(DestinationTile);
 					Terrain->CleanAvailableTiles();
 					ActiveUnit->MoveUnit(TilesPath);
-					ActiveUnit->SetUnitState(UnitState::Moving);
-					OnStateChanged.Broadcast(UnitState::Moving);
+					ActiveUnit->SetUnitState(EUnitState::Moving);
+					OnStateChanged.Broadcast(EUnitState::Moving);
 				}
 			}
 			break;
-		case UnitState::ReadyToCombat:
+		case EUnitState::ReadyToCombat:
+			UE_LOG(LogTemp, Warning, TEXT("==============================================================="));
+			UE_LOG(LogTemp, Warning, TEXT("The unit was combatting so an attack has to be processed"));
 			if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
 			{
+				UE_LOG(LogTemp, Warning, TEXT("A valid unit was hit"));
 				if (Terrain->CheckAvailableTile(HitUnit->GetActorLocation()))
 				{
-					ActiveUnit->SetUnitState(UnitState::Combating);
-					OnStateChanged.Broadcast(UnitState::Combating);
+					UE_LOG(LogTemp, Warning, TEXT("The terrain is available so the attack will be checked"));
+					ActiveUnit->SetUnitState(EUnitState::Combating);
+					OnStateChanged.Broadcast(EUnitState::Combating);
 					ActiveUnit->UseCurrentAction(HitUnit);
 					Terrain->CleanAvailableTiles();
-					ActiveUnit->SetUnitState(UnitState::Idle);
+					ActiveUnit->SetUnitState(EUnitState::Idle);
 				}
+			}
+			else if (ABaseTile* HitTile = Cast<ABaseTile>(HitResult.GetActor()))
+			{
+				UE_LOG(LogTemp, Warning, TEXT("A valid tile was hit"));
 			}
 			break;
 		default:
@@ -95,9 +110,9 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 void ATRPGPlayerState::ReverseState(UUserWidget* ActiveUnitWidget)
 {
 	// If there is an active unit doing something the reverse function is for they, else, it is for deselect the selcted unit
-	if (ActiveUnit && (ActiveUnit->GetUnitState() == UnitState::ReadyToMove || ActiveUnit->GetUnitState() == UnitState::ReadyToCombat))
+	if (ActiveUnit && (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat))
 	{
-		ChangeState(UnitState::Idle);
+		ChangeState(EUnitState::Idle);
 	}	
 	else if (SelectedUnit)
 	{
@@ -106,7 +121,7 @@ void ATRPGPlayerState::ReverseState(UUserWidget* ActiveUnitWidget)
 	}
 }
 
-void ATRPGPlayerState::ChangeState(UnitState NewState, int32 ActionPosition)
+void ATRPGPlayerState::ChangeState(EUnitState NewState, int32 ActionPosition)
 {
 	// If there is not yet an active unit, it means the the game has nor started yet
 	if (ActiveUnit == nullptr)
@@ -115,15 +130,15 @@ void ATRPGPlayerState::ChangeState(UnitState NewState, int32 ActionPosition)
 	// Change the CurrentState and reflects it ingame
 	switch (NewState)
 	{
-	case UnitState::Idle:
+	case EUnitState::Idle:
 		Terrain->CleanAvailableTiles();
 		ActiveUnit->SetUnitState(NewState);
 		break;
-	case UnitState::ReadyToMove:
+	case EUnitState::ReadyToMove:
 		ActiveUnit->SetUnitState(NewState);
 		Terrain->ShowAvailableTiles(ActiveUnit);
 		break;
-	case UnitState::ReadyToCombat:
+	case EUnitState::ReadyToCombat:
 		ActiveUnit->SetCombatAction(ActionPosition);
 		ActiveUnit->SetUnitState(NewState);
 		Terrain->ShowAvailableTiles(ActiveUnit);
@@ -135,6 +150,5 @@ void ATRPGPlayerState::ChangeState(UnitState NewState, int32 ActionPosition)
 
 void ATRPGPlayerState::CheckMovement(UUserWidget* ActiveUnitWidget)
 {
-	UE_LOG(LogTemp, Warning, TEXT("CheckMovement function called"));
 }
 
