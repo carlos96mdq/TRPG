@@ -298,7 +298,7 @@ public:
 	void UseCurrentAction(ABaseUnit* Objective);
 
 	// Apply a direct damage to the unit and verify if it dies because of it
-	void ApplyDamage(int32 Damage);
+	void ApplyDamage(int32 Damage, EUnitType DamageType);
 
 	// Apply an effect to a unit
 	void ApplyEffect(EEffectName EffectName, int32 Value);

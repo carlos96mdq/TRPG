@@ -54,7 +54,6 @@ void ABaseTile::OnTileClicked(AActor* ClickedActor, FKey ButtonPressed)
 void ABaseTile::OnTileMouseOver(AActor* OverActor)
 {
 	MouseOverEffect->ToggleVisibility();
-	UE_LOG(LogTemp, Warning, TEXT("This tile Movement Cost is %d"), MovementCost);
 }
 
 void ABaseTile::SetGlowingEffect(bool bNewState, int32 EffectIdx)
