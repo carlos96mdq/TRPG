@@ -9,7 +9,6 @@
 void UMMHUDWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	UE_LOG(LogTemp, Warning, TEXT("UMMHUDWidget::NativeConstruct"));
 	LoadScreen->SetVisibility(ESlateVisibility::Collapsed);
 	PlayButton->OnClicked.AddUniqueDynamic(this, &UMMHUDWidget::PlayPressed);
 }

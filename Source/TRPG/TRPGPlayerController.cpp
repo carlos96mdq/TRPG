@@ -115,7 +115,6 @@ void ATRPGPlayerController::OnMouseRightClicked()
 
 void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)
 {
-    UE_LOG(LogTemp, Warning, TEXT("Combat action handled"));
     if (ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>())
     {
         MyPlayerState->ChangeState(EUnitState::ReadyToCombat, ActionPosition);
@@ -128,7 +127,6 @@ void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)
 
 void ATRPGPlayerController::OnMoveAction()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Move action handled"));
     if (ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>())
     {
         MyPlayerState->ChangeState(EUnitState::ReadyToMove);
@@ -141,7 +139,6 @@ void ATRPGPlayerController::OnMoveAction()
 
 void ATRPGPlayerController::OnWaitAction()
 {
-    UE_LOG(LogTemp, Warning, TEXT("Wait action handled"));
     if (ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>())
     {
         MyPlayerState->ChangeState(EUnitState::Idle);
@@ -184,7 +181,6 @@ void ATRPGPlayerController::OnZoomCameraAction(const FInputActionInstance& Insta
     //TODO crear alguna limitacion para el zoom
     //TODO ver cual es el valor tan diminuto que tira para casi no mover nada
     // Zoom camera
-    UE_LOG(LogTemp, Warning, TEXT("Scroll value: %f"), ZoomValue);
     //MyPawn->AddMovementInput(MyPawn->GetActorForwardVector(), ZoomValue * 1000000);
 
 

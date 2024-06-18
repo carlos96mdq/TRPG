@@ -5,7 +5,6 @@
 
 void UTRPGGameInstanceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Inicializando UTRPGGameInstanceSubsystem"));
 }
 
 void UTRPGGameInstanceSubsystem::SetSelectedUnitName(FName NewName)

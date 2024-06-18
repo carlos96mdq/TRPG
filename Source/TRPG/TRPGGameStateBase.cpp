@@ -7,6 +7,10 @@
 #include "TRPGPlayerState.h"
 #include "TRPGGameInstanceSubsystem.h"
 
+ATRPGGameStateBase::ATRPGGameStateBase()
+{
+}
+
 // Called when the game starts or when spawned
 void ATRPGGameStateBase::BeginPlay()
 {
@@ -51,7 +55,6 @@ void ATRPGGameStateBase::BeginPlay()
 
 void ATRPGGameStateBase::StartGame()
 {
-	UE_LOG(LogTemp, Warning, TEXT("StartGame in time: %d"), FDateTime::Now().GetTicks());
 	// Init random seed
 	FMath::RandInit(FDateTime::Now().GetTicks());
 
@@ -93,8 +96,6 @@ void ATRPGGameStateBase::SetNextTurn()
 		ActiveUnitIndex = 0;
 	check(UnitsArray[ActiveUnitIndex]);
 
-	UE_LOG(LogTemp, Warning, TEXT("SetNextTurn ActiveUnitIndex: %d"), ActiveUnitIndex);
-	
 	// Make this current unit turn starts check
 	UnitsArray[ActiveUnitIndex]->TurnStarts();
 

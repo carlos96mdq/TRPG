@@ -59,8 +59,6 @@ void ATerrain::CreateMap()
 
 void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 {
-	UE_LOG(LogTemp, Warning, TEXT("==============================================================="));
-	UE_LOG(LogTemp, Warning, TEXT("Function to show all available tiles was called"));
 	// First clean any current available tile
 	CleanAvailableTiles();
 	
@@ -139,8 +137,6 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 			}
 		}
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("For now, %d tiles were catagorized as possible and %d as obstacles"), PossibleTiles.Num(), ObstacleTiles.Num());
 
 	// Get all the available tiles to this action
 	for (int32 i = 2; i <= MaxRange; i++)

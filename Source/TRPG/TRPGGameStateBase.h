@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameStateBase.h"
+#include "Engine/DataTable.h"
 #include "TRPGGameStateBase.generated.h"
 
 // Forward declarations
@@ -48,6 +49,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+
+	ATRPGGameStateBase();
+
 	// Initialize the turn-system
 	void StartGame();
 	

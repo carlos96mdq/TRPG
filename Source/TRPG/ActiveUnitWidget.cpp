@@ -11,7 +11,6 @@
 
 void UActiveUnitWidget::NativeConstruct()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UActiveUnitWidget::NativeConstruct"));
 	Super::NativeConstruct();
 
 	ButtonCombat0->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat0Pressed);
@@ -28,43 +27,36 @@ void UActiveUnitWidget::NativeConstruct()
 
 void UActiveUnitWidget::Combat0Pressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(0);
 }
 
 void UActiveUnitWidget::Combat1Pressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(1);
 }
 
 void UActiveUnitWidget::Combat2Pressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(2);
 }
 
 void UActiveUnitWidget::Combat3Pressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(3);
 }
 
 void UActiveUnitWidget::Combat4Pressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(4);
 }
 
 void UActiveUnitWidget::MovePressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Move button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnMoveAction();
 }
 
 void UActiveUnitWidget::WaitPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Wait button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnWaitAction();
 }
 

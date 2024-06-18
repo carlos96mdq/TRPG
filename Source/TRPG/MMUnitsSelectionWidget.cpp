@@ -10,7 +10,6 @@
 
 void UMMUnitsSelectionWidget::NativeConstruct()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UTurnOrderWidget::NativeConstruct"));
 	Super::NativeConstruct();
 	
 	ButtonUnit0->SetIndex(0);
@@ -52,8 +51,6 @@ void UMMUnitsSelectionWidget::SetSelectableUnits()
 
 void UMMUnitsSelectionWidget::SelectUnit(int32 UnitIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Aprete el boton %d"), UnitIndex);
-
 	AMMPlayerState* MyPlayerState = GetOwningPlayer<AMMPlayerController>()->GetPlayerState<AMMPlayerState>();
 	check(MyPlayerState);
 

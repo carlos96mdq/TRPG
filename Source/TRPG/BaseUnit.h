@@ -10,6 +10,31 @@
 
 // Enums
 UENUM()
+enum class EUnitType : uint8 {
+	None,
+	Bug,
+	Dark,
+	Dragon,
+	Electric,
+	Fairy,
+	Fighting,
+	Fire,
+	Flying,
+	Ghost,
+	Grass,
+	Ground,
+	Normal,
+	Ice,
+	Posion,
+	Psychic,
+	Rock,
+	Steel,
+	Water,
+
+	MAX
+};
+
+UENUM()
 enum class EUnitState : uint8 {
 	Idle,
 	ReadyToMove,
@@ -22,9 +47,7 @@ UENUM()
 enum class EUnitStats : uint8 {
 	None,
 	MaxHealth,
-	Health,
 	NaturalArmor,
-	Armor,
 	Strenght,
 	Dexterity,
 	Special,
@@ -32,30 +55,9 @@ enum class EUnitStats : uint8 {
 	Mobility,
 	Accuracy,
 	CriticChance,
-	DoggingChance
-};
+	EvadeChance,
 
-UENUM()
-enum class EUnitType : uint8 {
-	None,
-	Normal,
-	Fire,
-	Water,
-	Electric,
-	Grass,
-	Ice,
-	Fighting,
-	Posion,
-	Ground,
-	Flying,
-	Psychic,
-	Bug,
-	Rock,
-	Ghost,
-	Dragon,
-	Dark,
-	Steel,
-	Fairy
+	MAX
 };
 
 UENUM()
@@ -84,7 +86,7 @@ enum class EPassiveType : uint8 {
 };
 
 UENUM()
-enum class EEffectName : uint8 {
+enum class EStatusEffects : uint8 {
 	None,
 	Burn,
 	Poison,
@@ -92,10 +94,15 @@ enum class EEffectName : uint8 {
 	Sleep,
 	Paralysis,
 	Confuse,
-	Armor,
-	Strenght,
-	Dexterity,
-	Special
+
+	MAX
+};
+
+UENUM()
+enum class EEffectTypes : uint8 {
+	None,
+	Status,
+	Stats
 };
 
 UENUM()
@@ -110,6 +117,51 @@ enum class EObjectiveType : uint8 {
 };
 
 // Structs
+// Struct to create a Data Table that contains all the unit damage types relations
+USTRUCT(BlueprintType)
+struct FDamageTypeModifiers : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Bug = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Dark = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Dragon = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Electric = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Fairy = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Fighting = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Fire = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Flying = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Ghost = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Grass = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Ground = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Normal = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Ice = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Posion = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Psychic = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Rock = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Steel = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+		float Water = 1;
+};
+
 // Struct that defines the effects used inside the CombatActions and Pasives data tables
 USTRUCT()
 struct FEffects : public FTableRowBase
@@ -118,7 +170,11 @@ struct FEffects : public FTableRowBase
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EEffectName Name = EEffectName::None;
+	EEffectTypes Type = EEffectTypes::None;	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EUnitStats NameStat = EUnitStats::None;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EStatusEffects NameStatus = EStatusEffects::None;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Value = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -205,6 +261,8 @@ UCLASS()
 class TRPG_API ABaseUnit : public AActor
 {
 	GENERATED_BODY()
+
+	static bool bDamageTypeModifiersTableLoaded;
 	
 protected:
 	// Called when the game starts or when spawned
@@ -217,21 +275,20 @@ protected:
 	// Called in tick to move unit
 	void Move(float DeltaTime);
 
-	// Called to add the resistance values added by the type or subtyp
-	void AddTypeModifiers(EUnitType NewType);
-
-	// Unit information
+	// Unit data
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
 	EUnitType Type = EUnitType::None;
 	EUnitType SubType = EUnitType::None;
 	EUnitState CurrentState = EUnitState::Idle;
 	
-	// Unit stats
-	FUnits* BaseStats;
+	TArray<int32> BaseStats;				// List of unit base stats derived from the archetype
 	int32 Health = 0;
 	int32 Armor = 0;
 	
+	TArray<int32> StatsEffects;				// List of active effects that modifier the unit stats
+	TArray<int32> StatusEffects;			// List of active effects that add a status to the unit
+
 	// Unit actions
 	TArray<FName> KnownCombatActions;		// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
 	TArray<int32> EquippedCombatActions;	// Saves an index to the KnownCombatActions array
@@ -240,8 +297,7 @@ protected:
 	// Unit passives
 	TArray<FName> KnownPassives;	// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
 
-	// Unit status
-	TMap<EEffectName, int32> ActiveEffects;	// List of active buffs, checked in different moments ingame
+	static TArray<TArray<float>> DamageTypeModifiers;
 
 	// Units Textures
 	UPROPERTY()
@@ -262,6 +318,8 @@ protected:
 	UDataTable* CombatActionsTable;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* PassivesTable;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UDataTable* DamageTypeModifiersTable;
 
 	// Movement
 	int32 MaxMovement = 0;
@@ -301,7 +359,7 @@ public:
 	void ApplyDamage(int32 Damage, EUnitType DamageType);
 
 	// Apply an effect to a unit
-	void ApplyEffect(EEffectName EffectName, int32 Value);
+	void ApplyEffect(const FEffects& Effect);
 
 	// Set the Unit State and send a message to all object that need to know about it
 	void SetUnitState(EUnitState NewState);
@@ -310,7 +368,7 @@ public:
 
 	const EUnitState GetUnitState() const { return CurrentState; }
 	const int32 GetUnitStat(EUnitStats Stat) const;
-	const int32 GetUnitResistance(EUnitType DamageType);
+	const float GetDamageTypeModifier(EUnitType DamageType);
 	const int32 GetMovement() const { return Movement; }
 	const int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
 	const int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }

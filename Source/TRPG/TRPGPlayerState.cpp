@@ -62,14 +62,10 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 			}
 			break;
 		case EUnitState::ReadyToCombat:
-			UE_LOG(LogTemp, Warning, TEXT("==============================================================="));
-			UE_LOG(LogTemp, Warning, TEXT("The unit was combatting so an attack has to be processed"));
 			if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("A valid unit was hit"));
 				if (Terrain->CheckAvailableTile(HitUnit->GetActorLocation()))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("The terrain is available so the attack will be checked"));
 					ActiveUnit->SetUnitState(EUnitState::Combating);
 					OnStateChanged.Broadcast(EUnitState::Combating);
 					ActiveUnit->UseCurrentAction(HitUnit);
@@ -79,7 +75,6 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 			}
 			else if (ABaseTile* HitTile = Cast<ABaseTile>(HitResult.GetActor()))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("A valid tile was hit"));
 			}
 			break;
 		default:

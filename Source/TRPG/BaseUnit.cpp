@@ -4,6 +4,9 @@
 #include "BaseUnit.h"
 #include "Animation/AnimInstance.h"
 
+bool bDamageTypeModifiersTableLoaded = false;
+TArray<TArray<float>> ABaseUnit::DamageTypeModifiers;
+
 ABaseUnit::ABaseUnit()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -17,6 +20,11 @@ ABaseUnit::ABaseUnit()
 	//Model3DComponent->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	
 	//Model3DComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
+
+	// Initialize the TArrays
+	BaseStats.Init(0, (int32)EUnitStats::MAX);
+	StatsEffects.Init(0, (int32)EUnitStats::MAX);
+	StatusEffects.Init(0, (int32)EStatusEffects::MAX);
 }
 
 void ABaseUnit::Init(FName NewArchetype)
@@ -30,22 +38,27 @@ void ABaseUnit::BeginPlay()
 	Super::BeginPlay();
 
 	// Get data linked to Unit Name and save it
-	BaseStats = UnitsTable->FindRow<FUnits>(Archetype, "", true);
-	check(BaseStats);
+	FUnits* DTBaseStats = UnitsTable->FindRow<FUnits>(Archetype, "", true);
+	check(DTBaseStats);
 	
-	// Set unit resistances using the just aquired type
-	AddTypeModifiers(Type);
-	AddTypeModifiers(SubType);
+	Type = DTBaseStats->Type;
+	SubType = DTBaseStats->SubType;
 
 	// Load and reference assets needed
-	Icon = BaseStats->Icon.LoadSynchronous();
-	Model3D = BaseStats->Model3D.LoadSynchronous();
-	AnimationBP = BaseStats->AnimationBP.LoadSynchronous();
+	Icon = DTBaseStats->Icon.LoadSynchronous();
+	Model3D = DTBaseStats->Model3D.LoadSynchronous();
+	AnimationBP = DTBaseStats->AnimationBP.LoadSynchronous();
 
-	// Set variable stats using the base stats
-	Health = BaseStats->MaxHealth;
-	Armor = BaseStats->NaturalArmor;
-	UE_LOG(LogTemp, Warning, TEXT("This unit starts with a Helath of %d and an Armor of %d"), Health, Armor);
+	// Set unit stats from data
+	BaseStats[(int8)EUnitStats::MaxHealth] = DTBaseStats->MaxHealth;
+	BaseStats[(int8)EUnitStats::NaturalArmor] = DTBaseStats->NaturalArmor;
+	BaseStats[(int8)EUnitStats::Strenght] = DTBaseStats->Strenght;
+	BaseStats[(int8)EUnitStats::Dexterity] = DTBaseStats->Dexterity;
+	BaseStats[(int8)EUnitStats::Special] = DTBaseStats->Special;
+	BaseStats[(int8)EUnitStats::Velocity] = DTBaseStats->Velocity;
+	Health = GetUnitStat(EUnitStats::MaxHealth);
+	Armor = GetUnitStat(EUnitStats::NaturalArmor);
+	UE_LOG(LogTemp, Display, TEXT("[UNIT STARTS] This unit starts with a Health of %d and an Armor of %d"), Health, Armor);
 	//TODO inicializo las pasivas manualmente, esto deberia venir como data de algun lado
 	//KnownPassives.Add("Pasiva_test");
 
@@ -65,57 +78,54 @@ void ABaseUnit::BeginPlay()
 	}
 	//Model3DComponent->SetAnimClass(AnimationBP->GetClass());
 	//Model3DComponent->SetAnimInstance(Animation);
+
+	// As the DamageTypeModifiers TArray is static, only initialize it the first time that it's called
+	if (DamageTypeModifiers.IsEmpty())
+	{
+		check(DamageTypeModifiersTable);
+		TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
+
+		// Initialize all the elements in one so the case of Type::None is covered
+		TArray<float> InitializationArray;
+		InitializationArray.Init(1, (int32)EUnitType::MAX);
+		DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
+
+		for (size_t attacker = 1; attacker < WARDTArray.Num(); attacker++)
+		{
+			for (size_t defender = 1; defender < WARDTArray.Num(); defender++)
+			{
+				DamageTypeModifiers[attacker][defender] = FCString::Atof(*(WARDTArray[attacker][defender]));
+			}
+		}
+
+		//UE_LOG(LogTemp, Display, TEXT("[TESTING] The DamageTypeModifieres array was filled, and this are the values:"));
+
+	}
 }
 
 void ABaseUnit::TurnStarts()
 {
 	// Check if the unit loses its turn
 
-	// Reset the Unit's armor if left
-
+	Armor = GetUnitStat(EUnitStats::NaturalArmor);
 }
 
 void ABaseUnit::TurnEnds()
 {
-	// Add Unit natural Armor to its Armor
-
-	// List of Active Effects to remove because they wasted
-	TArray<EEffectName> EffectsToRemove;
-
 	// Check for damage coming from Burn or Poison effects and reduce their effects
-	for (TTuple<EEffectName, int32> &Effect : ActiveEffects)
+	for (uint8 i = 0; i < StatusEffects.Num() - 1; i++)
 	{
-		if (Effect.Key == EEffectName::Burn || Effect.Key == EEffectName::Poison)
+		if ((i == (uint8)EStatusEffects::Burn || i == (uint8)EStatusEffects::Poison) && StatusEffects[i] > 0)
 		{
-			ApplyDamage(Effect.Value, EUnitType::None);
-			UE_LOG(LogTemp, Warning, TEXT("This unit receives %d damage points from an effect"), Effect.Value);
-			Effect.Value--;
-			if (Effect.Value <= 0)
-				EffectsToRemove.Emplace(Effect.Key);
+			UE_LOG(LogTemp, Display, TEXT("[UNIT TURN] This unit receives %d damage points from an effect"), StatusEffects[i]);
+			ApplyDamage(StatusEffects[i], EUnitType::None);
+			StatusEffects[i]--;
 		}
 	}
-
-	// Remove all effects that finished
-	for (EEffectName EffectName : EffectsToRemove)
-		ActiveEffects.Remove(EffectName);
-
-	// TODO this will stay here as future options. Delete when not needed anymore.
-	//for (FActiveEffect *AE : ActiveEffects)
-	//{
-	//	switch (AE->Name)
-	//	{
-	//		case Burn: 
-	//			HandleBurn(AE);
-	//		break
-	//	}
-	//}
-
 }
 
 void ABaseUnit::OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed)
-{
-	//UE_LOG(LogTemp, Warning, TEXT("Unidad seleccionada"));
-}
+{}
 
 
 void ABaseUnit::Move(float DeltaTime)
@@ -148,10 +158,6 @@ void ABaseUnit::Move(float DeltaTime)
 			CurrentState = EUnitState::Idle;
 		}
 	}
-}
-
-void ABaseUnit::AddTypeModifiers(EUnitType NewType)
-{
 }
 
 void ABaseUnit::Tick(float DeltaTime)
@@ -212,7 +218,7 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	bool IsCritic = false;
 	bool IsSuccess = false;
 	int32 HitChanceDie = FMath::RandRange(1, 100);
-	int32 HitThreshold = GetUnitStat(EUnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(EUnitStats::DoggingChance);
+	int32 HitThreshold = GetUnitStat(EUnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(EUnitStats::EvadeChance);
 	int32 CriticThreshold = GetUnitStat(EUnitStats::CriticChance);	//TODO ver el tema del critico
 	
 	// If it is a critic it allways hit, don't matter the objective DoggingChance 
@@ -224,15 +230,13 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	// The action passed the accuracy check, so continue
 	if (IsSuccess || IsCritic)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("The Attack launched by %s hit %s"), *Name.ToString(), *(Objective->Name).ToString());
-
+		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction launched by %s hit %s"), *Name.ToString(), *(Objective->Name).ToString());
 		// First apply the damge only if this Action is an Attack
 		if (CurrentCombatAction->Type == ECombatActionType::Attack)
 		{
-			// Get Attack base power
+			// Get Attack Damage
 			int32 Damage = CurrentCombatAction->Power;
-			UE_LOG(LogTemp, Warning, TEXT("This attack has a power of %d"), Damage);
-			// Apply unit damage modifier according to damage type
+			
 			switch (CurrentCombatAction->Modifier)
 			{
 			case EDamageModifier::Strenght:
@@ -247,14 +251,12 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 			default:
 				break;
 			}
-			UE_LOG(LogTemp, Warning, TEXT("And after adding this unit Modifier the damage is %d"), Damage);
-			// Apply critic bonus
+			
 			if (IsCritic)
-			{
 				Damage = FMath::Floor(Damage * 1.5);
-				UE_LOG(LogTemp, Warning, TEXT("And after adding the critic bonus it is %d"), Damage);
-			}
-				
+			
+			UE_LOG(LogTemp, Display, TEXT("[COMBAT] It was an Attack with a total damage of %d"), Damage);
+
 			// Apply the damage to the Objective
 			Objective->ApplyDamage(Damage, CurrentCombatAction->DamageType);
 		}
@@ -284,58 +286,67 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 				int32 ChanceDie = FMath::RandRange(1, 100);
 
 				if (ChanceDie <= Chance)
-					EffectObjective->ApplyEffect(Effect.Name, Effect.Value);
+					EffectObjective->ApplyEffect(Effect);
 			}
 		}
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Attack missed"));
+		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction missed"));
 	}
 }
 
 void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 {
 	int32 FinalDamage = Damage;
-	UE_LOG(LogTemp, Warning, TEXT("This unit receive a damage to process of: %d, and has a current Armor of: %d"), Damage, Armor);
+	UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit receive a damage to process of: %d, and has a current Armor of: %d"), Damage, Armor);
 
-	// First apply the unit armor
 	FinalDamage -= Armor;
 	Armor -= Damage;
 
-	// Check for not negative Armor
 	if (Armor < 0)
 		Armor = 0;
-	UE_LOG(LogTemp, Warning, TEXT("After processing the armor, this unit get a Final Damage of: %d, and has an Armor of: %d"), FinalDamage, Armor);
-	// TODO Reduce or add the unit resistenace or weakness to the Final Damage
-	FinalDamage -= GetUnitResistance(DamageType);
+	if (FinalDamage < 0)
+		FinalDamage = 0;
+	UE_LOG(LogTemp, Display, TEXT("[COMBAT] After processing the armor, this unit get a Final Damage of: %d, and has an Armor of: %d"), FinalDamage, Armor);
 
-	// Apply any non-negative Damage to the Unit's Health
+	// Apply only non-negative Damage
 	if (FinalDamage > 0)
 	{
+		FinalDamage *= GetDamageTypeModifier(DamageType);
+		FinalDamage = (int32)floorf(FinalDamage);
+		if (FinalDamage == 0)
+			FinalDamage = 1;
+		UE_LOG(LogTemp, Display, TEXT("[COMBAT] After getting the damage type modifier, this unit get a Final Damage of: %d"), FinalDamage);
+
 		Health = Health - FinalDamage;
 
-		UE_LOG(LogTemp, Warning, TEXT("Current Damage: %d"), Damage);
-		UE_LOG(LogTemp, Warning, TEXT("Current Health: %d"), Health);
+		UE_LOG(LogTemp, Display, TEXT("[COMBAT] Health after damage: %d"), Health);
 
 		// If this unit Helath reaches 0, kill this unit
-		if (true)
+		if (Health <= 0)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("This unit just died"));
+			UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit just died"));
 		}
 	}
 	else
-		UE_LOG(LogTemp, Warning, TEXT("The Final Damage wasn't enought to damage this unit"));
+		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
 }
 
-void ABaseUnit::ApplyEffect(EEffectName EffectName, int32 Value)
+void ABaseUnit::ApplyEffect(const FEffects& Effect)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Apply the Combat Action Effect to this objective unit"));
-	// Apply effect to objective unit
-	if (ActiveEffects.Contains(EffectName))
-		ActiveEffects[EffectName] += Value;
-	else
-		ActiveEffects.Add(EffectName, Value);
+	UE_LOG(LogTemp, Display, TEXT("[COMBAT] Apply the Combat Action Effect to this objective unit"));
+	
+	if (Effect.Type == EEffectTypes::Stats)
+	{
+		check((uint8)Effect.NameStat < StatsEffects.Num());
+		StatsEffects[(uint8)Effect.NameStat] += Effect.Value;
+	}
+	else if (Effect.Type == EEffectTypes::Status)
+	{
+		check((uint8)Effect.NameStatus < StatusEffects.Num());
+		StatusEffects[(uint8)Effect.NameStatus] += Effect.Value;
+	}
 }
 
 void ABaseUnit::SetUnitState(EUnitState NewState)
@@ -345,8 +356,6 @@ void ABaseUnit::SetUnitState(EUnitState NewState)
 
 bool ABaseUnit::HasActionEquipped(int32 CombatActionSlot) const
 {
-	UE_LOG(LogTemp, Warning, TEXT("HasActionEquipped"));
-	//UE_LOG(LogTemp, Warning, TEXT("CombatActionSlot: %d, KnownCombatActions: %d"), CombatActionSlot, EquippedCombatActions[CombatActionSlot]);
 	check(CombatActionSlot >= 0 && CombatActionSlot <= 4);
 	if (EquippedCombatActions[CombatActionSlot] >= 0 && EquippedCombatActions[CombatActionSlot] < KnownCombatActions.Num())
 		return true;
@@ -359,36 +368,12 @@ const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 	int32 StatValue = 0;
 	
 	// Add base value coming from unit archetype base stats
-	switch (Stat)
-	{
-		case EUnitStats::MaxHealth:
-			StatValue += BaseStats->MaxHealth;
-			break;
-		case EUnitStats::NaturalArmor:
-			StatValue += BaseStats->NaturalArmor;
-			break;
-		case EUnitStats::Strenght:
-			StatValue += BaseStats->Strenght;
-			if (ActiveEffects.Contains(EEffectName::Strenght))
-				StatValue += ActiveEffects[EEffectName::Strenght];
-			UE_LOG(LogTemp, Warning, TEXT("This unit Strenght value is %d"), StatValue);
-			break;
-		case EUnitStats::Dexterity:
-			StatValue += BaseStats->Dexterity;
-			if (ActiveEffects.Contains(EEffectName::Dexterity))
-				StatValue += ActiveEffects[EEffectName::Dexterity];
-			break;
-		case EUnitStats::Special:
-			StatValue += BaseStats->Special;
-			if (ActiveEffects.Contains(EEffectName::Special))
-				StatValue += ActiveEffects[EEffectName::Special];
-			break;
-		case EUnitStats::Velocity:
-			StatValue += BaseStats->Velocity;
-			break;
-		default:
-			break;
-	}
+	check((uint8)Stat < BaseStats.Num())
+	StatValue += BaseStats[(uint8)Stat];
+
+	// Add modifier value from stats effects
+	check((uint8)Stat < StatsEffects.Num());
+	StatValue += StatsEffects[(uint8)Stat];
 
 	// Add values coming from unit pasives
 	//for (FName PassiveName : KnownPassives)
@@ -416,72 +401,17 @@ const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 	//	}
 	//}
 
-	//TODO a eso agregarle cualquier modificacion surgida por el equipamiento
-
-	// TODO Depending on the stat check for different active status that modify that stat
 
 
 	return StatValue;
 }
 
-const int32 ABaseUnit::GetUnitResistance(EUnitType DamageType)
+const float ABaseUnit::GetDamageTypeModifier(EUnitType DamageType)
 {
-	int32 ResistanceValue = 0;
-
-	// Add base value coming from unit archetype base stats	//TODO esto queda comentado para futuro, pero por ahora la resistencia no se almacena en el data asset, sino que depende al tipo de la unidad
-	//switch (DamageType)
-	//{
-	//case EUnitResistances::Slashing:
-	//	ResistanceValue += BaseStats->Resistances.Slashing;
-	//	break;
-	//case EUnitResistances::Bludgeoning:
-	//	ResistanceValue += BaseStats->Resistances.Bludgeoning;
-	//	break;
-	//case EUnitResistances::Piercing:
-	//	ResistanceValue += BaseStats->Resistances.Piercing;
-	//	break;
-	//case EUnitResistances::Fire:
-	//	ResistanceValue += BaseStats->Resistances.Fire;
-	//	break;
-	//case EUnitResistances::Poison:
-	//	ResistanceValue += BaseStats->Resistances.Poison;
-	//	break;
-	//case EUnitResistances::Lightning:
-	//	ResistanceValue += BaseStats->Resistances.Lightning;
-	//	break;
-	//default:
-	//	break;
-	//}
-
-	// Add values coming from unit pasives
-	//for (FName PassiveName : KnownPassives)
-	//{
-	//	FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
-	//	check(Passive);
-
-	//	if (Passive->Type == EPassiveType::Start)
-	//	{
-	//		for (const FEffects& Effect : Passive->Effects)
-	//		{
-	//			// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
-	//			if (Effect.Type == EEffectName::Resistances && Effect.SubType == (uint8)DamageType && (Effect.Objective == EObjectiveType::User || Effect.Objective == EObjectiveType::Allies))
-	//			{
-	//				if (Effect.IsValuePercent)
-	//				{
-	//					ResistanceValue = FMath::Floor(ResistanceValue * (1 + Effect.Value / 100));
-	//				}
-	//				else
-	//				{
-	//					ResistanceValue += Effect.Value;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-	//TODO a eso agregarle cualquier modificacion surgida por el equipamiento
-
-	//TODO finalmente tener en cuenta cualquier status que pueda afectar
-
+	float ResistanceValue = DamageTypeModifiers[(int32)DamageType][(int32)Type];
+	UE_LOG(LogTemp, Display, TEXT("[TESTING] The damage modifier got from the attack type %d and defender type %d was: %f"), (int32)DamageType, (int32)Type, ResistanceValue);
+	ResistanceValue *= DamageTypeModifiers[(int32)DamageType][(int32)SubType];
+	UE_LOG(LogTemp, Display, TEXT("[TESTING] The damage modifier got from adding the previous value to the new value from the attack type %d and defender subtype %d was: %f"), (int32)DamageType, (int32)SubType, ResistanceValue);
+	//ResistanceValue *= GetWorld()->GetGameState<ATRPGGameStateBase>()->GetDamageTypeModifier((int32)DamageType, (int32)SubType);
 	return ResistanceValue;
 }

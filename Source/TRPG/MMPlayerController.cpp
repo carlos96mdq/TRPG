@@ -20,7 +20,6 @@ void AMMPlayerController::SetupInputComponent()
 void AMMPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-    UE_LOG(LogTemp, Warning, TEXT("AMyMMPlayerController::BeginPlay"));
     HUDWidget = CreateWidget<UMMHUDWidget>(this, HUDWidgetClass);
     check(HUDWidget);
     HUDWidget->AddToViewport();
