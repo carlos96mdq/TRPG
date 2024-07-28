@@ -20,7 +20,6 @@ class TRPG_API UActiveUnitWidget : public UUserWidget
 {
 	GENERATED_BODY()
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void NativeConstruct() override;
 
@@ -35,17 +34,16 @@ protected:
 	UFUNCTION()
 	void Combat3Pressed();
 	UFUNCTION()
-	void Combat4Pressed();
-	UFUNCTION()
 	void WaitPressed();
 
-	// Binded to ActiveUnit setting function in GameState to refresh its data in this widget
-	void SetUnitData(ABaseUnit* ActiveUnit);
-	
+	TArray<UButton*> CombatButtons;
+
+public:
+	void UpdateUnitData(ABaseUnit* ActiveUnit);
+
 	// Binded to ActiveUnit state changed function in PlayerState to refresh buttons in widget
 	void ChangeButtonsState(EUnitState NewState);
 
-public:
 	// Buttons
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UButton* ButtonMove;
@@ -58,13 +56,9 @@ public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UButton* ButtonCombat3;
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UButton* ButtonCombat4;
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UButton* ButtonWait;
 
 	// Labels
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UTextBlock* LabelName;
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UTextBlock* LabelArchetype;
 };

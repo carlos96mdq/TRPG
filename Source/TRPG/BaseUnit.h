@@ -7,6 +7,8 @@
 #include "Engine/DataTable.h"
 #include "BaseUnit.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsMoving, int32)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitUpdateStats, int32)
 
 // Enums
 UENUM()
@@ -48,11 +50,11 @@ enum class EUnitStats : uint8 {
 	None,
 	MaxHealth,
 	NaturalArmor,
+	MaxEnergy,
 	Strenght,
 	Dexterity,
 	Special,
 	Velocity,
-	Mobility,
 	Accuracy,
 	CriticChance,
 	EvadeChance,
@@ -199,6 +201,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EDamageModifier Modifier = EDamageModifier::None;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 Energy = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Accuracy = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EObjectiveType ObjectiveType = EObjectiveType::None;
@@ -240,6 +244,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 NaturalArmor = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 MaxEnergy = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Strenght = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Dexterity = 0;
@@ -247,8 +253,6 @@ public:
 	int32 Special = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int32 Velocity = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Movility = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UTexture2D> Icon;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -275,7 +279,11 @@ protected:
 	// Called in tick to move unit
 	void Move(float DeltaTime);
 
+	void AddCombatAction(FName ActionName);
+
 	// Unit data
+	bool bIsPlayer = false;
+	int32 UnitPlayerIndex = -1;
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
 	EUnitType Type = EUnitType::None;
@@ -285,14 +293,13 @@ protected:
 	TArray<int32> BaseStats;				// List of unit base stats derived from the archetype
 	int32 Health = 0;
 	int32 Armor = 0;
+	int32 Energy = 0;
 	
 	TArray<int32> StatsEffects;				// List of active effects that modifier the unit stats
 	TArray<int32> StatusEffects;			// List of active effects that add a status to the unit
 
-	// Unit actions
-	TArray<FName> KnownCombatActions;		// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
-	TArray<int32> EquippedCombatActions;	// Saves an index to the KnownCombatActions array
-	FCombatActions* CurrentCombatAction;	// Saves the data of the current combat action in use, to make all calculations needed to apply damage and effects
+	TArray<FCombatActions*> CombatActions;
+	FCombatActions* CurrentCombatAction;
 
 	// Unit passives
 	TArray<FName> KnownPassives;	// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
@@ -322,8 +329,6 @@ protected:
 	UDataTable* DamageTypeModifiersTable;
 
 	// Movement
-	int32 MaxMovement = 0;
-	int32 Movement = 5;
 	TQueue<FVector> QueueDestinations;
 	FVector Destination = FVector::ZeroVector;
 
@@ -332,10 +337,13 @@ public:
 	ABaseUnit();
 
 	// Initialize the unit with some parameters needed to get the unit data from the data tables
-	void Init(FName NewArchetype);
+	void Init(FName NewArchetype, bool IsPlayer=false);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	FOnUnitStopsMoving OnUnitStopsMoving;
+	FOnUnitUpdateStats OnUnitUpdateStats;
 
 	// Called when this unit turn starts
 	void TurnStarts();
@@ -349,8 +357,8 @@ public:
 	// Called by PlayerState to make this unit move to a destination following a preseted path
 	void MoveUnit(TArray<FVector>& Path);
 
-	// Set the CurrentCombatAction and return false if the action selected doesn't exist
-	void SetCombatAction(int32 ActionId);
+	// Set the CurrentCombatAction
+	void SetCombatAction(int32 ActionIdx);
 
 	// The unit uses one of its equipped actions
 	void UseCurrentAction(ABaseUnit* Objective);
@@ -364,17 +372,23 @@ public:
 	// Set the Unit State and send a message to all object that need to know about it
 	void SetUnitState(EUnitState NewState);
 
-	bool HasActionEquipped(int32 CombatActionSlot) const;
+	void SetUnitPlayerIndex(int32 NewIdx) { UnitPlayerIndex = NewIdx; }
+
+	bool HasActionEquipped(int32 CombatActionIndex) const;
 
 	const EUnitState GetUnitState() const { return CurrentState; }
 	const int32 GetUnitStat(EUnitStats Stat) const;
 	const float GetDamageTypeModifier(EUnitType DamageType);
-	const int32 GetMovement() const { return Movement; }
 	const int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
 	const int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }
-	const FName GetName() const { return Name; }
-	const FName GetArchetype() const { return Archetype; }
-	UTexture2D* GetIcon() const { return Icon; };
+	const int32 GetCombatActionEnergyCost(int32 ActionIdx=-1) const;
+	const FName GetName() const { return Archetype; }
+	const int32 GetLife() const { return Health; }
+	const int32 GetArmor() const { return Armor; }
+	const int32 GetEnergy() const { return Energy; }
+	UTexture2D* GetIcon() const { return Icon; }
+	const bool IsPlayer() const { return bIsPlayer; }
+	const int32 GetUnitPlayerIndex() const { return UnitPlayerIndex; }
 
 	UFUNCTION(BlueprintCallable)
 	const bool IsMoving() const { return CurrentState == EUnitState::Moving; }

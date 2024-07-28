@@ -17,12 +17,17 @@ void UActiveUnitWidget::NativeConstruct()
 	ButtonCombat1->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat1Pressed);
 	ButtonCombat2->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat2Pressed);
 	ButtonCombat3->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat3Pressed);
-	ButtonCombat4->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat4Pressed);
 	ButtonMove->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::MovePressed);
 	ButtonWait->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::WaitPressed);
 
-	GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &UActiveUnitWidget::SetUnitData);
-	GetOwningPlayerState<ATRPGPlayerState>()->OnStateChanged.AddUObject(this, &UActiveUnitWidget::ChangeButtonsState);
+	CombatButtons.Add(ButtonCombat0);
+	CombatButtons.Add(ButtonCombat1);
+	CombatButtons.Add(ButtonCombat2);
+	CombatButtons.Add(ButtonCombat3);
+
+	//GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &UActiveUnitWidget::SetUnitData);
+	//GetOwningPlayer<ATRPGPlayerController>()->OnActiveUnitSet.AddUObject(this, &UActiveUnitWidget::UpdateUnitData);
+	//GetOwningPlayerState<ATRPGPlayerState>()->OnStateChanged.AddUObject(this, &UActiveUnitWidget::ChangeButtonsState);
 }
 
 void UActiveUnitWidget::Combat0Pressed()
@@ -45,11 +50,6 @@ void UActiveUnitWidget::Combat3Pressed()
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(3);
 }
 
-void UActiveUnitWidget::Combat4Pressed()
-{
-	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(4);
-}
-
 void UActiveUnitWidget::MovePressed()
 {
 	GetOwningPlayer<ATRPGPlayerController>()->OnMoveAction();
@@ -60,31 +60,53 @@ void UActiveUnitWidget::WaitPressed()
 	GetOwningPlayer<ATRPGPlayerController>()->OnWaitAction();
 }
 
-void UActiveUnitWidget::SetUnitData(ABaseUnit* ActiveUnit)
+void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 {
 	LabelName->SetText(FText::FromName(ActiveUnit->GetName()));
-	LabelArchetype->SetText(FText::FromName(ActiveUnit->GetArchetype()));
 
-	// If the widget is hidden, show it
 	if (GetVisibility() != ESlateVisibility::Visible)
 		SetVisibility(ESlateVisibility::Visible);
 
-	// Enable anly buttons that have actions handled
-	ButtonMove->SetIsEnabled(true);
-	if (ActiveUnit->HasActionEquipped(0))
-		ButtonCombat0->SetIsEnabled(true);
-	if (ActiveUnit->HasActionEquipped(1))
-		ButtonCombat1->SetIsEnabled(true);
-	if (ActiveUnit->HasActionEquipped(2))
-		ButtonCombat2->SetIsEnabled(true);
-	if (ActiveUnit->HasActionEquipped(3))
-		ButtonCombat3->SetIsEnabled(true);
-	if (ActiveUnit->HasActionEquipped(4))
-		ButtonCombat4->SetIsEnabled(true);
+	if (ActiveUnit->GetUnitState() == EUnitState::Moving || ActiveUnit->GetUnitState() == EUnitState::Combating)
+	{
+		ButtonMove->SetIsEnabled(false);
+		ButtonWait->SetIsEnabled(false);
+
+		for (UButton* Button : CombatButtons)
+			Button->SetIsEnabled(false);
+	}
+	else
+	{
+		int32 UnitEnergy = ActiveUnit->GetEnergy();
+
+		ButtonWait->SetIsEnabled(true);
+		//TODO tambien antes que otra cosa se deberian setear todas las imagenes
+
+		if (UnitEnergy <= 0)
+			ButtonMove->SetIsEnabled(false);
+		else
+			ButtonMove->SetIsEnabled(true);
+
+		for (size_t i = 0; i < CombatButtons.Num(); i++)
+		{
+			UButton* CombatButton = CombatButtons[i];
+
+			if (ActiveUnit->HasActionEquipped(i) && ActiveUnit->GetCombatActionEnergyCost(i) <= UnitEnergy)
+				CombatButton->SetIsEnabled(true);
+			else
+				CombatButton->SetIsEnabled(false);
+		}
+	}
 }
 
 void UActiveUnitWidget::ChangeButtonsState(EUnitState NewState)
-{
+{	
+	//TODO deberia agarrar los botones y agregarlos en run time de igual manera que agrego los UnitDataIcon
+	if (NewState == EUnitState::Idle || NewState == EUnitState::ReadyToMove || NewState == EUnitState::ReadyToCombat)
+	{
+
+	}
+
 	// Disable buttons according to state
 	switch (NewState)
 	{
@@ -102,7 +124,6 @@ void UActiveUnitWidget::ChangeButtonsState(EUnitState NewState)
 		ButtonCombat1->SetIsEnabled(false);
 		ButtonCombat2->SetIsEnabled(false);
 		ButtonCombat3->SetIsEnabled(false);
-		ButtonCombat4->SetIsEnabled(false);
 		break;
 	default:
 		break;

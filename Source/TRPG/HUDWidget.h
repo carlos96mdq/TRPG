@@ -12,6 +12,8 @@ class USelectedUnitWidget;
 class UTurnOrderWidget;
 class UButton;
 class UImage;
+class UVerticalBox;
+class ABaseUnit;
 
 /**
  * 
@@ -33,14 +35,13 @@ public:
 	UActiveUnitWidget* ActiveUnitWidget;
 	
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	USelectedUnitWidget* SelectedUnitWidget;
-	
-	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UTurnOrderWidget* TurnOrderWidget;
-	
+	UVerticalBox* PlayerUnits;
+
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	//UImage* LoadScreen;
 
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	//UButton* PlayButton;
+
+	void UpdateActiveUnitData(ABaseUnit* Unit);
 };

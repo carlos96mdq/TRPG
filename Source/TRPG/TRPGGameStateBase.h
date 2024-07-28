@@ -12,6 +12,8 @@ class ABaseTile;
 class ABaseUnit;
 class ATerrain;
 
+DECLARE_MULTICAST_DELEGATE(FOnGameStarts)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewTurnStarts, bool)	// True states that its the Player's turn, otherwise is an NPC turn
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveUnitSet, ABaseUnit*)
 
 /**
@@ -40,8 +42,9 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	// Array of units that are in the current map
 	TArray<ABaseUnit*> UnitsArray;
 
+	bool bIsPlayerTurn = false;	// As the game is an one player game, this var defines if its the players turn or the npc turn
+
 	// Unit whose turn is the current one
-	//ABaseUnit* ActiveUnit;
 	int32 ActiveUnitIndex = -1;
 
 protected:
@@ -56,11 +59,13 @@ public:
 	void StartGame();
 	
 	// Set next turn
-	void SetNextTurn();
+	void SetNextTurn(bool bFirstTurn=false);
 
 	// Fill a reference TArray with the current location of all units
 	void GetAllUnitLocations(TArray<FVector> &Locations);
 
+	FOnGameStarts OnGameStarts;
+	FOnNewTurnStarts OnNewTurnStarts;
 	FOnActiveUnitSet OnActiveUnitSet;
 
 	const TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
@@ -69,4 +74,6 @@ public:
 	ABaseUnit* GetActiveUnit();
 	// In this case the BaseUnit returned is the one with the offset with the ActiveUnit in the UnitsArray 
 	ABaseUnit* GetUnitByActiveUnitReference(int32 offset);
+	ABaseUnit* GetUnitByIndex(int32 Index);
+	const int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
 };

@@ -30,7 +30,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(SelectedUnitName);
+	UnitsArray[NewUnitIndex]->Init(SelectedUnitName, true);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
 
 	// Create 2 default units to test
@@ -39,7 +39,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Charmander"));
+	UnitsArray[NewUnitIndex]->Init(TEXT("Charmander"), true);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f)));
 
 	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
@@ -47,7 +47,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 50.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"));
+	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"), true);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
 
 	StartGame();
@@ -77,30 +77,73 @@ void ATRPGGameStateBase::StartGame()
 		}
 	);
 
-	// Set first turn
-	SetNextTurn();
-}
-
-void ATRPGGameStateBase::SetNextTurn()
-{
-	// First, if there was an Active Unit, make its turn end check
-	if (ActiveUnitIndex >= 0)
+	// Check for all added units. Then if they are player's units, add an id to identify the unit.
+	// Then call the function to StartTurn in ALL units so the initial armor is set to everybody
+	uint8 UnitId = 1;
+	for (ABaseUnit* Unit : UnitsArray)
 	{
-		check(UnitsArray[ActiveUnitIndex]);
-		UnitsArray[ActiveUnitIndex]->TurnEnds();
+		check(Unit);
+		Unit->TurnStarts();
 	}
 
+	// Set first turn
+	SetNextTurn(true);
+
+	// Notify everybody that the game has starts
+	OnGameStarts.Broadcast();
+}
+
+void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
+{
+	if (!bFirstTurn)
+	{
+		for (ABaseUnit* Unit : UnitsArray)
+		{
+			check(Unit);
+			if (Unit->IsPlayer() == bIsPlayerTurn)
+			{
+				Unit->TurnEnds();
+			}
+		}
+	}
+
+	// First, if there was an Active Unit, make its turn end check
+	//if (ActiveUnitIndex >= 0)
+	//{
+	//	check(UnitsArray[ActiveUnitIndex]);
+	//	UnitsArray[ActiveUnitIndex]->TurnEnds();
+	//}
+
+	// Set the next Player. In this case, the turn rotates between the player and the npc
+	if (bIsPlayerTurn)
+		bIsPlayerTurn = true;	//TODO POR AHORA ESTO ESTA EN TRUE PARA FORZAR UN LOOP CONTINUO DEL PLAYER. PARA IMPLEMENTAR LA AI, CAMBIAR POR FALSE
+	else
+		bIsPlayerTurn = true;
+
 	// Continue to the next unit
-	ActiveUnitIndex++;
-	if (ActiveUnitIndex >= UnitsArray.Num())
-		ActiveUnitIndex = 0;
-	check(UnitsArray[ActiveUnitIndex]);
+	//ActiveUnitIndex++;
+	//if (ActiveUnitIndex >= UnitsArray.Num())
+	//	ActiveUnitIndex = 0;
+	//check(UnitsArray[ActiveUnitIndex]);
+
+	if (!bFirstTurn)
+	{
+		for (ABaseUnit* Unit : UnitsArray)
+		{
+			check(Unit);
+			if (Unit->IsPlayer() == bIsPlayerTurn)
+			{
+				Unit->TurnStarts();
+			}
+		}
+	}
 
 	// Make this current unit turn starts check
-	UnitsArray[ActiveUnitIndex]->TurnStarts();
+	//UnitsArray[ActiveUnitIndex]->TurnStarts();
 
-	// Send delegate sign
-	OnActiveUnitSet.Broadcast(UnitsArray[ActiveUnitIndex]);
+	// Notify everybody that a new turn has started
+	OnNewTurnStarts.Broadcast(bIsPlayerTurn);
+	//OnActiveUnitSet.Broadcast(UnitsArray[ActiveUnitIndex]);
 }
 
 void ATRPGGameStateBase::GetAllUnitLocations(TArray<FVector>& Locations)
@@ -135,4 +178,12 @@ ABaseUnit* ATRPGGameStateBase::GetUnitByActiveUnitReference(int32 offset)
 	}
 	
 	return UnitsArray[UnitIndex];
+}
+
+ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index)
+{
+	if (Index >= 0 && Index < UnitsArray.Num())
+		return UnitsArray[Index];
+	else
+		return nullptr;
 }

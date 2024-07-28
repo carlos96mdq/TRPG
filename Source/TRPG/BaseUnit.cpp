@@ -27,10 +27,10 @@ ABaseUnit::ABaseUnit()
 	StatusEffects.Init(0, (int32)EStatusEffects::MAX);
 }
 
-void ABaseUnit::Init(FName NewArchetype)
+void ABaseUnit::Init(FName NewArchetype, bool IsPlayer)
 {
-	Name = NewArchetype;
 	Archetype = NewArchetype;
+	bIsPlayer = IsPlayer;
 }
 
 void ABaseUnit::BeginPlay()
@@ -52,20 +52,21 @@ void ABaseUnit::BeginPlay()
 	// Set unit stats from data
 	BaseStats[(int8)EUnitStats::MaxHealth] = DTBaseStats->MaxHealth;
 	BaseStats[(int8)EUnitStats::NaturalArmor] = DTBaseStats->NaturalArmor;
+	BaseStats[(int8)EUnitStats::MaxEnergy] = DTBaseStats->MaxEnergy;
 	BaseStats[(int8)EUnitStats::Strenght] = DTBaseStats->Strenght;
 	BaseStats[(int8)EUnitStats::Dexterity] = DTBaseStats->Dexterity;
 	BaseStats[(int8)EUnitStats::Special] = DTBaseStats->Special;
 	BaseStats[(int8)EUnitStats::Velocity] = DTBaseStats->Velocity;
 	Health = GetUnitStat(EUnitStats::MaxHealth);
 	Armor = GetUnitStat(EUnitStats::NaturalArmor);
+	Energy = GetUnitStat(EUnitStats::MaxEnergy);
 	UE_LOG(LogTemp, Display, TEXT("[UNIT STARTS] This unit starts with a Health of %d and an Armor of %d"), Health, Armor);
 	//TODO inicializo las pasivas manualmente, esto deberia venir como data de algun lado
 	//KnownPassives.Add("Pasiva_test");
 
 	//TODO PLACEHOLDER inicializo la tabla de acciones con algo cargado para pruebas
-	EquippedCombatActions.Init(-1, 5);
-	EquippedCombatActions[0] = KnownCombatActions.Add("Ember");
-	EquippedCombatActions[1] = KnownCombatActions.Add("Growl");
+	AddCombatAction(FName("Ember"));
+	AddCombatAction(FName("Growl"));
 
 	// Set SkeletonMesh from datatable
 	Model3DComponent->SetSkeletalMesh(Model3D);
@@ -90,11 +91,11 @@ void ABaseUnit::BeginPlay()
 		InitializationArray.Init(1, (int32)EUnitType::MAX);
 		DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
 
-		for (size_t attacker = 1; attacker < WARDTArray.Num(); attacker++)
+		for (size_t Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
 		{
-			for (size_t defender = 1; defender < WARDTArray.Num(); defender++)
+			for (size_t Defender = 1; Defender < WARDTArray.Num(); Defender++)
 			{
-				DamageTypeModifiers[attacker][defender] = FCString::Atof(*(WARDTArray[attacker][defender]));
+				DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
 			}
 		}
 
@@ -108,6 +109,7 @@ void ABaseUnit::TurnStarts()
 	// Check if the unit loses its turn
 
 	Armor = GetUnitStat(EUnitStats::NaturalArmor);
+	Energy = GetUnitStat(EUnitStats::MaxEnergy);
 }
 
 void ABaseUnit::TurnEnds()
@@ -126,7 +128,6 @@ void ABaseUnit::TurnEnds()
 
 void ABaseUnit::OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed)
 {}
-
 
 void ABaseUnit::Move(float DeltaTime)
 {
@@ -156,6 +157,8 @@ void ABaseUnit::Move(float DeltaTime)
 		if (!QueueDestinations.Dequeue(Destination))
 		{
 			CurrentState = EUnitState::Idle;
+			OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
+			OnUnitStopsMoving.Broadcast(UnitPlayerIndex);
 		}
 	}
 }
@@ -187,25 +190,47 @@ void ABaseUnit::MoveUnit(FVector FinalDestination)
 
 void ABaseUnit::MoveUnit(TArray<FVector>& Path)
 {
-	for (int32 i = (Path.Num() - 1); i >= 0; i--) 
+	// Before anything, check and reduce the energy needed to make this movement
+	if (Path.Num() <= Energy)
 	{
-		//FVector CurrentLocation = Path.Pop();
-		FVector CurrentLocation = Path[i];
-		QueueDestinations.Enqueue(FVector(CurrentLocation.X, CurrentLocation.Y, GetActorLocation().Z));
+		Energy -= Path.Num();
+
+		for (int32 i = (Path.Num() - 1); i >= 0; i--)
+		{
+			//FVector CurrentLocation = Path.Pop();
+			FVector CurrentLocation = Path[i];
+			QueueDestinations.Enqueue(FVector(CurrentLocation.X, CurrentLocation.Y, GetActorLocation().Z));
+		}
+
+		// Set the first step
+		QueueDestinations.Dequeue(Destination);
 	}
-	
-	// Set the first step
-	QueueDestinations.Dequeue(Destination);
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[UNIT ACTION] This unit is trying to move a distance greater than its energy"));
+		CurrentState = EUnitState::Idle;
+	}
 }
 
-void ABaseUnit::SetCombatAction(int32 ActionId)
+void ABaseUnit::AddCombatAction(FName ActionName)
 {
-	// Verify if the action used is valid
-	check(ActionId >= 0 && ActionId <= 4 && EquippedCombatActions[ActionId] >= 0 && EquippedCombatActions[ActionId] < KnownCombatActions.Num());
+	FCombatActions* CombatAction = CombatActionsTable->FindRow<FCombatActions>(ActionName, "", true);
 
-	// Get action data from data table
-	CurrentCombatAction = CombatActionsTable->FindRow<FCombatActions>(KnownCombatActions[EquippedCombatActions[ActionId]], "", true);
-	check(CurrentCombatAction);
+	if (CombatAction)
+		CombatActions.Add(CombatAction);
+	else
+		UE_LOG(LogTemp, Warning, TEXT("[UNIT STARTS] The Unit is trying to add a Combat Action that doesn't exist in data tables"));
+}
+
+void ABaseUnit::SetCombatAction(int32 ActionIdx)
+{
+	if (ActionIdx >= 0 && ActionIdx < CombatActions.Num())
+	{
+		CurrentCombatAction = CombatActions[ActionIdx];
+		check(CurrentCombatAction);
+	}
+	else
+		UE_LOG(LogTemp, Warning, TEXT("[UNIT COMBAT] The Unit is trying to use a Combat Action that doesn't have"));
 }
 
 void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
@@ -214,85 +239,99 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 
 	// TODO Check for actions effects that are executed before accuracy check
 
-	// Check if this action pass the accuracy check (if it hits)
-	bool IsCritic = false;
-	bool IsSuccess = false;
-	int32 HitChanceDie = FMath::RandRange(1, 100);
-	int32 HitThreshold = GetUnitStat(EUnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(EUnitStats::EvadeChance);
-	int32 CriticThreshold = GetUnitStat(EUnitStats::CriticChance);	//TODO ver el tema del critico
-	
-	// If it is a critic it allways hit, don't matter the objective DoggingChance 
-	if (HitChanceDie <= CriticThreshold)
-		IsCritic = true;
-	else if (HitChanceDie <= HitThreshold)
-		IsSuccess = true;
-
-	// The action passed the accuracy check, so continue
-	if (IsSuccess || IsCritic)
+	// Before anything, check and reduce the energy needed to make this action
+	if (CurrentCombatAction->Energy <= Energy)
 	{
-		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction launched by %s hit %s"), *Name.ToString(), *(Objective->Name).ToString());
-		// First apply the damge only if this Action is an Attack
-		if (CurrentCombatAction->Type == ECombatActionType::Attack)
-		{
-			// Get Attack Damage
-			int32 Damage = CurrentCombatAction->Power;
-			
-			switch (CurrentCombatAction->Modifier)
-			{
-			case EDamageModifier::Strenght:
-				Damage += GetUnitStat(EUnitStats::Strenght);
-				break;
-			case EDamageModifier::Dexterity:
-				Damage += GetUnitStat(EUnitStats::Dexterity);
-				break;
-			case EDamageModifier::Special:
-				Damage += GetUnitStat(EUnitStats::Special);
-				break;
-			default:
-				break;
-			}
-			
-			if (IsCritic)
-				Damage = FMath::Floor(Damage * 1.5);
-			
-			UE_LOG(LogTemp, Display, TEXT("[COMBAT] It was an Attack with a total damage of %d"), Damage);
+		Energy -= CurrentCombatAction->Energy;
 
-			// Apply the damage to the Objective
-			Objective->ApplyDamage(Damage, CurrentCombatAction->DamageType);
-		}
+		// Check if this action pass the accuracy check (if it hits)
+		bool IsCritic = false;
+		bool IsSuccess = false;
+		int32 HitChanceDie = FMath::RandRange(1, 100);
+		int32 HitThreshold = GetUnitStat(EUnitStats::Accuracy) + CurrentCombatAction->Accuracy - Objective->GetUnitStat(EUnitStats::EvadeChance);
+		int32 CriticThreshold = GetUnitStat(EUnitStats::CriticChance);	//TODO ver el tema del critico
 
-		// Check for action effects (in case of Skills, they only have effects but don't do damage)
-		if (CurrentCombatAction->Effects.Num() > 0)
+		// If it is a critic it allways hit, don't matter the objective DoggingChance 
+		if (HitChanceDie <= CriticThreshold)
+			IsCritic = true;
+		else if (HitChanceDie <= HitThreshold)
+			IsSuccess = true;
+
+		// The action passed the accuracy check, so continue
+		if (IsSuccess || IsCritic)
 		{
-			ABaseUnit* EffectObjective;
-			for (const FEffects& Effect : CurrentCombatAction->Effects)
+			UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction launched by %s hit %s"), *Name.ToString(), *(Objective->Name).ToString());
+			// First apply the damge only if this Action is an Attack
+			if (CurrentCombatAction->Type == ECombatActionType::Attack)
 			{
-				// Set the effect's objective because it can be different than the attack/skill objective
-				switch (Effect.Objective)
+				// Get Attack Damage
+				int32 Damage = CurrentCombatAction->Power;
+
+				switch (CurrentCombatAction->Modifier)
 				{
-				case EObjectiveType::User:
-					EffectObjective = this;
+				case EDamageModifier::Strenght:
+					Damage += GetUnitStat(EUnitStats::Strenght);
 					break;
-				case EObjectiveType::Enemy:
-					EffectObjective = Objective;
+				case EDamageModifier::Dexterity:
+					Damage += GetUnitStat(EUnitStats::Dexterity);
+					break;
+				case EDamageModifier::Special:
+					Damage += GetUnitStat(EUnitStats::Special);
 					break;
 				default:
-					EffectObjective = Objective;
 					break;
 				}
 
-				// Check for chance
-				int32 Chance = Effect.Chance;
-				int32 ChanceDie = FMath::RandRange(1, 100);
+				if (IsCritic)
+					Damage = FMath::Floor(Damage * 1.5);
 
-				if (ChanceDie <= Chance)
-					EffectObjective->ApplyEffect(Effect);
+				UE_LOG(LogTemp, Display, TEXT("[COMBAT] It was an Attack with a total damage of %d"), Damage);
+
+				// Apply the damage to the Objective
+				Objective->ApplyDamage(Damage, CurrentCombatAction->DamageType);
+			}
+
+			// Check for action effects (in case of Skills, they only have effects but don't do damage)
+			if (CurrentCombatAction->Effects.Num() > 0)
+			{
+				ABaseUnit* EffectObjective;
+				for (const FEffects& Effect : CurrentCombatAction->Effects)
+				{
+					// Set the effect's objective because it can be different than the attack/skill objective
+					switch (Effect.Objective)
+					{
+					case EObjectiveType::User:
+						EffectObjective = this;
+						break;
+					case EObjectiveType::Enemy:
+						EffectObjective = Objective;
+						break;
+					default:
+						EffectObjective = Objective;
+						break;
+					}
+
+					// Check for chance
+					int32 Chance = Effect.Chance;
+					int32 ChanceDie = FMath::RandRange(1, 100);
+
+					if (ChanceDie <= Chance)
+						EffectObjective->ApplyEffect(Effect);
+				}
 			}
 		}
+		else
+		{
+			UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction missed"));
+		}
+
+		// This event is called to update any visual interface that need to change the units stats
+		OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The CombatAction missed"));
+		UE_LOG(LogTemp, Warning, TEXT("[UNIT ACTION] This unit is trying to use an action greater than its energy"));
+		CurrentState = EUnitState::Idle;
 	}
 }
 
@@ -328,6 +367,9 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 		{
 			UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit just died"));
 		}
+
+		// This event is called to update any visual interface that need to change the units stats
+		OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
 	}
 	else
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
@@ -354,13 +396,27 @@ void ABaseUnit::SetUnitState(EUnitState NewState)
 	CurrentState = NewState;
 }
 
-bool ABaseUnit::HasActionEquipped(int32 CombatActionSlot) const
+bool ABaseUnit::HasActionEquipped(int32 CombatActionIndex) const
 {
-	check(CombatActionSlot >= 0 && CombatActionSlot <= 4);
-	if (EquippedCombatActions[CombatActionSlot] >= 0 && EquippedCombatActions[CombatActionSlot] < KnownCombatActions.Num())
+	if (CombatActionIndex >= 0 && CombatActionIndex < CombatActions.Num())
 		return true;
 	else
 		return false;
+}
+
+const int32 ABaseUnit::GetCombatActionEnergyCost(int32 ActionIdx) const
+{
+	if (ActionIdx == -1)
+	{
+		check(CurrentCombatAction);
+		return CurrentCombatAction->Energy;
+	}
+	else
+	{
+		FCombatActions* CombatAction = CombatActions[ActionIdx];
+		check(CombatAction)
+		return CombatAction->Energy;
+	}
 }
 
 const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const

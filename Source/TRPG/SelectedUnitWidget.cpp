@@ -22,7 +22,6 @@ void USelectedUnitWidget::SetUnitData(ABaseUnit* SelectedUnit)
 	if (SelectedUnit)
 	{
 		LabelName->SetText(FText::FromName(SelectedUnit->GetName()));
-		LabelArchetype->SetText(FText::FromName(SelectedUnit->GetArchetype()));
 		SetVisibility(ESlateVisibility::Visible);
 	}
 	else

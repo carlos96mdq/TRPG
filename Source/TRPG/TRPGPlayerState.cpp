@@ -20,8 +20,6 @@ void ATRPGPlayerState::BeginPlay()
 	Super::BeginPlay();
 
 	PlayerStash = GetWorld()->SpawnActor<APlayerStash>();
-
-	//GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &ATRPGPlayerState::SetActiveUnit);
 }
 
 void ATRPGPlayerState::SetTerrain(ATerrain* TerrainPointer)

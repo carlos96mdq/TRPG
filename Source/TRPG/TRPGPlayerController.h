@@ -10,9 +10,12 @@
 class ABaseUnit;
 class UActiveUnitWidget;
 class UHUDWidget;
+class UUnitDataIcon;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionInstance;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveUnitSet, ABaseUnit*)
 
 /**
  * 
@@ -29,13 +32,19 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
-	// Called when mouse left button is clicked
-	// This action take the actor under the mouse cursor and send the data to PlayerState to procces an action
+	// The left click is used to select the active unit or see data about an enemy unit
 	void OnMouseLeftClicked();
 	
-	// Called when mouse right button is clicked
-	// This action is a "reverse" one, so it say the PlayerState to reverse its current state
+	// The right click is used to perform an action with an active unit, as move, attack or any else
 	void OnMouseRightClicked();
+
+	// This function is called at the start of a match. It should check for all the units in the maps, identify the player's one
+	// and register each one, creating an UUnitDataIcon for them in the process
+	void CreateUnitsData();
+
+	void NewTurnStarts(bool bIsPlayer);
+
+	void SetActiveUnit(ABaseUnit* NewActiveUnit);
 
 	// Widget that show the data of the active unit widget
 	UActiveUnitWidget* ActiveUnitWidget;
@@ -43,12 +52,24 @@ protected:
 	// PlayerHUD widget
 	UHUDWidget* HUDWidget;
 
+	TArray<int32> PlayerUnitsIndex;
+	TArray<ABaseUnit*> PlayerUnits;
+	TArray<UUnitDataIcon*> UnitDataIconList;
+
+	int32 PlayerActiveUnitIndex = 0;
+
 	// MainArena Camera	--TODO esto deberia ver donde ponerlo, lo mejor creo que seria spawnearlo en el PlayerState, ahora lo dejo aca para probar facilmente
 	ACameraActor* MainCamera;
 
 public:
 	// Allows the PlayerController to set up custom input bindings
 	virtual void SetupInputComponent() override;
+
+	// Called by the active unit when finishing with its moving process so the tiles could be paint again
+	void OnUnitStopMoving(int32 PlayerUnitIndex);
+
+	// Called by the active unit when finishing with its moving process so the tiles could be paint again
+	void OnUnitUpdateStats(int32 PlayerUnitIndex);
 
 	// Called by action widget when a Combat action was selected and pressed
 	void OnCombatAction(int32 ActionPosition);
@@ -65,17 +86,22 @@ public:
 	// Called when players press action to zoom camera
 	void OnZoomCameraAction(const FInputActionInstance& Instance);
 
+	FOnActiveUnitSet OnActiveUnitSet;
+
 	// User Widget class used to spawn widgets in the world
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 	TSubclassOf<UUserWidget> UserWidgetClass;
 
 	// CombatPlayer Widget to Spawn in world
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 	TSubclassOf<UUserWidget> ActiveUnitWidgetClass;
 
 	// CombatPlayer Widget to Spawn in world
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
 	TSubclassOf<UUserWidget> HUDWidgetClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Widget")
+	TSubclassOf<UUnitDataIcon> UnitDataIconClass;
 
 	// Input Mapping Context asset for the Enhanced Input System
 	UPROPERTY(EditAnywhere, Category = "Input")

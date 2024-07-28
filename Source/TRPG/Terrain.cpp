@@ -70,7 +70,7 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 	EUnitState State = ActiveUnit->GetUnitState();
 	if (State == EUnitState::ReadyToMove)
 	{
-		MaxRange = ActiveUnit->GetMovement();
+		MaxRange = ActiveUnit->GetEnergy();
 	}
 	else if (State == EUnitState::ReadyToCombat)
 	{

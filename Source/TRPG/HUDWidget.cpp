@@ -14,8 +14,6 @@ void UHUDWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
-	SelectedUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
-	TurnOrderWidget->SetVisibility(ESlateVisibility::Collapsed);
 	//LoadScreen->SetVisibility(ESlateVisibility::Visible);
 
 	//PlayButton->OnClicked.AddUniqueDynamic(this, &UHUDWidget::PlayPressed);
@@ -34,3 +32,8 @@ void UHUDWidget::NativeConstruct()
 //	// TODO: Lo dejo de muestra, pero como no tengo mas el boton Play esto ya no va más
 //	GetWorld()->GetGameState<ATRPGGameStateBase>()->StartGame();
 //}
+
+void UHUDWidget::UpdateActiveUnitData(ABaseUnit* Unit)
+{ 
+	ActiveUnitWidget->UpdateUnitData(Unit);
+}
