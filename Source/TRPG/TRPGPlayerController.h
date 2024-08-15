@@ -24,9 +24,7 @@ UCLASS()
 class TRPG_API ATRPGPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	ATRPGPlayerController();
 
-protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -46,13 +44,14 @@ protected:
 
 	void SetActiveUnit(ABaseUnit* NewActiveUnit);
 
+	bool bIsPlayerTurn = false;
+
 	// Widget that show the data of the active unit widget
 	UActiveUnitWidget* ActiveUnitWidget;
 	
 	// PlayerHUD widget
 	UHUDWidget* HUDWidget;
 
-	TArray<int32> PlayerUnitsIndex;
 	TArray<ABaseUnit*> PlayerUnits;
 	TArray<UUnitDataIcon*> UnitDataIconList;
 
@@ -62,11 +61,12 @@ protected:
 	ACameraActor* MainCamera;
 
 public:
+	ATRPGPlayerController();
+
 	// Allows the PlayerController to set up custom input bindings
 	virtual void SetupInputComponent() override;
 
-	// Called by the active unit when finishing with its moving process so the tiles could be paint again
-	void OnUnitStopMoving(int32 PlayerUnitIndex);
+	virtual void OnUnitStops(int32 PlayerUnitIndex);
 
 	// Called by the active unit when finishing with its moving process so the tiles could be paint again
 	void OnUnitUpdateStats(int32 PlayerUnitIndex);
@@ -77,8 +77,8 @@ public:
 	// Called by action widget when Move action is pressed
 	void OnMoveAction();
 	
-	// Called by action widget when Wait action is pressed
-	void OnWaitAction();
+	// Called by action widget when EndTurn action is pressed
+	void OnEndTurnAction();
 
 	// Called when players press action to move camera
 	void OnMoveCameraAction(const FInputActionInstance& Instance);

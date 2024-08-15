@@ -11,7 +11,7 @@ void UActionWidget::NativeConstruct()
 
 	ButtonCombat->OnClicked.AddUniqueDynamic(this, &UActionWidget::CombatPressed);
 	ButtonMove->OnClicked.AddUniqueDynamic(this, &UActionWidget::MovePressed);
-	ButtonWait->OnClicked.AddUniqueDynamic(this, &UActionWidget::WaitPressed);
+	ButtonEndTurn->OnClicked.AddUniqueDynamic(this, &UActionWidget::EndTurnPressed);
 }
 
 void UActionWidget::CombatPressed()
@@ -27,9 +27,9 @@ void UActionWidget::MovePressed()
 	GetOwningPlayer<ATRPGPlayerController>()->OnMoveAction();
 }
 
-void UActionWidget::WaitPressed()
+void UActionWidget::EndTurnPressed()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Wait button pressed"));
-	GetOwningPlayer<ATRPGPlayerController>()->OnWaitAction();
+	GetOwningPlayer<ATRPGPlayerController>()->OnEndTurnAction();
 }
 

@@ -129,12 +129,12 @@ void ATRPGPlayerState::ChangeState(EUnitState NewState, int32 ActionPosition)
 		break;
 	case EUnitState::ReadyToMove:
 		ActiveUnit->SetUnitState(NewState);
-		Terrain->ShowAvailableTiles(ActiveUnit);
+		Terrain->SetAvailableTiles(ActiveUnit);
 		break;
 	case EUnitState::ReadyToCombat:
 		ActiveUnit->SetCombatAction(ActionPosition);
 		ActiveUnit->SetUnitState(NewState);
-		Terrain->ShowAvailableTiles(ActiveUnit);
+		Terrain->SetAvailableTiles(ActiveUnit);
 		break;
 	default:
 		break;

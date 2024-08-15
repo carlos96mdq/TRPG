@@ -43,5 +43,6 @@ public:
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	//UButton* PlayButton;
 
+	void SetPlayerTurn(bool bIsPlayerTurn);
 	void UpdateActiveUnitData(ABaseUnit* Unit);
 };

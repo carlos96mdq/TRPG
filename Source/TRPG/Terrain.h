@@ -41,7 +41,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// Save in an array all the tiles that are available to the current action and show them in map
-	void ShowAvailableTiles(ABaseUnit* ActiveUnit);
+	void SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles=true);
 
 	// Check if the tile receive is inside the selected ones
 	bool CheckAvailableTile(ABaseTile* TileNeeded);
@@ -54,4 +54,6 @@ public:
 
 	// Get all the tiles that compund the path from the current position to the destination
 	TArray<FVector> GetPath(ABaseTile* DestinationTile);
+
+	const int32 GetTileCost(FVector EnemyPosition) const;
 };

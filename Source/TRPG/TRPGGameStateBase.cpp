@@ -3,7 +3,9 @@
 
 #include "TRPGGameStateBase.h"
 #include "BaseUnit.h"
+#include "NpcUnit.h"
 #include "Terrain.h"
+#include "NpcController.h"
 #include "TRPGPlayerState.h"
 #include "TRPGGameInstanceSubsystem.h"
 
@@ -17,6 +19,7 @@ void ATRPGGameStateBase::BeginPlay()
 	Super::BeginPlay();
 	
 	Terrain = GetWorld()->SpawnActor<ATerrain>();
+	NpcController = GetWorld()->SpawnActor<ANpcController>();
 
 	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
 
@@ -33,7 +36,7 @@ void ATRPGGameStateBase::BeginPlay()
 	UnitsArray[NewUnitIndex]->Init(SelectedUnitName, true);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
 
-	// Create 2 default units to test
+	// TEST: Create 2 default units
 	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
 		BaseUnitClass,
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
@@ -50,6 +53,15 @@ void ATRPGGameStateBase::BeginPlay()
 	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"), true);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
 
+	// TEST: Create a npc
+	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ANpcUnit>(
+		NpcUnitClass,
+		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
+		)
+	);
+	UnitsArray[NewUnitIndex]->Init(TEXT("Rattata"), false);
+	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f)));
+
 	StartGame();
 }
 
@@ -58,7 +70,9 @@ void ATRPGGameStateBase::StartGame()
 	// Init random seed
 	FMath::RandInit(FDateTime::Now().GetTicks());
 
+	// DEPRECATED 
 	// Sort the units array according to their velocity
+	/*
 	UnitsArray.Sort([](const ABaseUnit& LeftUnit, const ABaseUnit& RightUnit)
 		{
 			if (LeftUnit.GetUnitStat(EUnitStats::Velocity) > RightUnit.GetUnitStat(EUnitStats::Velocity))
@@ -76,21 +90,14 @@ void ATRPGGameStateBase::StartGame()
 				return false;
 		}
 	);
+	*/
 
-	// Check for all added units. Then if they are player's units, add an id to identify the unit.
-	// Then call the function to StartTurn in ALL units so the initial armor is set to everybody
-	uint8 UnitId = 1;
+	// The function TurnStarts is called in all units so their initial stats like armor can be set
 	for (ABaseUnit* Unit : UnitsArray)
-	{
-		check(Unit);
 		Unit->TurnStarts();
-	}
 
-	// Set first turn
-	SetNextTurn(true);
-
-	// Notify everybody that the game has starts
 	OnGameStarts.Broadcast();
+	SetNextTurn(true);
 }
 
 void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
@@ -107,24 +114,11 @@ void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
 		}
 	}
 
-	// First, if there was an Active Unit, make its turn end check
-	//if (ActiveUnitIndex >= 0)
-	//{
-	//	check(UnitsArray[ActiveUnitIndex]);
-	//	UnitsArray[ActiveUnitIndex]->TurnEnds();
-	//}
-
-	// Set the next Player. In this case, the turn rotates between the player and the npc
+	// Set the next Player. In this case, the turn rotates between the player and the NpcController.
 	if (bIsPlayerTurn)
-		bIsPlayerTurn = true;	//TODO POR AHORA ESTO ESTA EN TRUE PARA FORZAR UN LOOP CONTINUO DEL PLAYER. PARA IMPLEMENTAR LA AI, CAMBIAR POR FALSE
+		bIsPlayerTurn = false;
 	else
 		bIsPlayerTurn = true;
-
-	// Continue to the next unit
-	//ActiveUnitIndex++;
-	//if (ActiveUnitIndex >= UnitsArray.Num())
-	//	ActiveUnitIndex = 0;
-	//check(UnitsArray[ActiveUnitIndex]);
 
 	if (!bFirstTurn)
 	{
@@ -138,12 +132,7 @@ void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
 		}
 	}
 
-	// Make this current unit turn starts check
-	//UnitsArray[ActiveUnitIndex]->TurnStarts();
-
-	// Notify everybody that a new turn has started
 	OnNewTurnStarts.Broadcast(bIsPlayerTurn);
-	//OnActiveUnitSet.Broadcast(UnitsArray[ActiveUnitIndex]);
 }
 
 void ATRPGGameStateBase::GetAllUnitLocations(TArray<FVector>& Locations)

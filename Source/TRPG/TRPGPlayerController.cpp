@@ -105,6 +105,7 @@ void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
 void ATRPGPlayerController::CreateUnitsData()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+    check(GameState);
     int32 UnitIndex = 0;
 
     for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
@@ -128,10 +129,8 @@ void ATRPGPlayerController::CreateUnitsData()
             UnitDataIconList[UnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
             UnitDataIconList[UnitIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
 
-            if (UnitIndex == 0)
-                SetActiveUnit(Unit);
-
-            Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStopMoving);
+            Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
+            Unit->OnUnitStopsAction.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
             Unit->OnUnitUpdateStats.AddUObject(this, &ATRPGPlayerController::OnUnitUpdateStats);
 
             UnitIndex++;
@@ -139,42 +138,29 @@ void ATRPGPlayerController::CreateUnitsData()
     }
 }
 
-//TODO esta funcion hay que rehacerla toda
 void ATRPGPlayerController::NewTurnStarts(bool bIsPlayer)
 {
-    if (bIsPlayer)
+    bIsPlayerTurn = bIsPlayer;
+    HUDWidget->SetPlayerTurn(bIsPlayer);
+
+    if (bIsPlayerTurn)
     {
-        ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-
-        for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
-        {
-            ABaseUnit* Unit = GameState->GetUnitByIndex(i);
-            check(Unit);
-
-            if (Unit->IsPlayer())
-            {
-                // Only if the Unit is a Player's one, create the UnitDataIconWidget element, add it to the HUD in viewport annd set the unit data in it
-                int32 NewUnitIndex = UnitDataIconList.Emplace(CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
-                check(UnitDataIconList[NewUnitIndex]);
-                HUDWidget->PlayerUnits->AddChild(UnitDataIconList[NewUnitIndex]);
-
-                UnitDataIconList[NewUnitIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-                UnitDataIconList[NewUnitIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-                UnitDataIconList[NewUnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-            }
-        }
-
-
+        //TODO en realidad en esta parte deberia iterar entre todas las unidades ahsta encotnrar la primera no muerta
+        SetActiveUnit(PlayerUnits[0]);
     }
     else
     {
-        //TODO en este caso deberia hacer una serie de cosas como ocultar ciertas interfaces y setear la unidad activa como invalida para que no se
-        // puedan procesar los clicks
+        ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+        check(GameState);
+        GameState->GetTerrain()->CleanAvailableTiles();
     }
 }
 
 void ATRPGPlayerController::OnMouseLeftClicked()
 {
+    if (!bIsPlayerTurn)
+        return;
+
     ABaseUnit* ActiveUnit = PlayerUnits[PlayerActiveUnitIndex];
     check(ActiveUnit);
 
@@ -182,7 +168,6 @@ void ATRPGPlayerController::OnMouseLeftClicked()
     FHitResult HitResult;
     GetHitResultUnderCursor(ECollisionChannel::ECC_WorldDynamic, false, HitResult);
 
-    //TODO deberia chequear el tema de si es el turno del jugador o no, ya que eso cambia mucho
     if (ActiveUnit->GetUnitState() != EUnitState::Moving || ActiveUnit->GetUnitState() != EUnitState::Combating)
     {
         if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
@@ -195,6 +180,11 @@ void ATRPGPlayerController::OnMouseLeftClicked()
 
 void ATRPGPlayerController::OnMouseRightClicked()
 {
+    if (!bIsPlayerTurn)
+        return;
+
+    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] Right click pressed"));
+
     //Get actor hit
     FHitResult HitResult;
     GetHitResultUnderCursor(ECollisionChannel::ECC_WorldDynamic, false, HitResult);
@@ -204,7 +194,6 @@ void ATRPGPlayerController::OnMouseRightClicked()
     ABaseUnit* ActiveUnit = PlayerUnits[PlayerActiveUnitIndex];
     check(ActiveUnit);
 
-    //TODO deberia chequear el tema de si es el turno del jugador o no, ya que eso cambia mucho
     if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove)
     {
         if (ABaseTile* DestinationTile = Cast<ABaseTile>(HitResult.GetActor()))
@@ -212,57 +201,38 @@ void ATRPGPlayerController::OnMouseRightClicked()
             if (GameState->GetTerrain()->CheckAvailableTile(DestinationTile))
             {
                 TArray<FVector> TilesPath = GameState->GetTerrain()->GetPath(DestinationTile);
-                GameState->GetTerrain()->CleanAvailableTiles();
                 ActiveUnit->MoveUnit(TilesPath);
-                ActiveUnit->SetUnitState(EUnitState::Moving);
+                GameState->GetTerrain()->CleanAvailableTiles();
                 HUDWidget->UpdateActiveUnitData(ActiveUnit);
-                //OnStateChanged.Broadcast(EUnitState::Moving);
             }
         }
     }
     else if (ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
     {
+        UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The Active Unit is Ready to Combat"));
         if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
         {
+            UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] And another unit was clicked"));
             if (GameState->GetTerrain()->CheckAvailableTile(HitUnit->GetActorLocation()))
             {
-                ActiveUnit->SetUnitState(EUnitState::Combating);
-                HUDWidget->UpdateActiveUnitData(ActiveUnit);
-                ActiveUnit->UseCurrentAction(HitUnit);
+                UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The message to Try to Use the Current Action was send to the Active Unit"));
+                ActiveUnit->TryUsingCurrentAction(HitUnit);
                 GameState->GetTerrain()->CleanAvailableTiles();
-
-                //TODO estas cosas ded abajo en realidad deberian ser llamadas por un delegate invocado por la unidad al terminar la accion
-                SetActiveUnit(ActiveUnit);
+                HUDWidget->UpdateActiveUnitData(ActiveUnit);
             }
         }
     }
-
-
-    //if (ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>())
-    //{
-    //    //Get actor hit and send it to PlayerState
-    //    MyPlayerState->ReverseState(ActiveUnitWidget);
-    //}
-    //else
-    //{
-    //    checkNoEntry();
-    //}
 }
 
-void ATRPGPlayerController::OnUnitStopMoving(int32 PlayerUnitIndex)
+void ATRPGPlayerController::OnUnitStops(int32 PlayerUnitIndex)
 {
     ABaseUnit* Unit = PlayerUnits[PlayerUnitIndex];
     check(Unit);
 
-    //TODO deberia chequear el tema de si es el turno del jugador o no, ya que eso cambia mucho
     if (PlayerUnitIndex == PlayerActiveUnitIndex)
     {
         OnMoveAction();
         HUDWidget->UpdateActiveUnitData(Unit);
-    }
-    else
-    {
-        Unit->SetUnitState(EUnitState::Idle);
     }
 }
 
@@ -289,7 +259,7 @@ void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)
 
     ActiveUnit->SetCombatAction(ActionPosition);
     ActiveUnit->SetUnitState((EUnitState::ReadyToCombat));
-    GameState->GetTerrain()->ShowAvailableTiles(ActiveUnit);
+    GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
 }
 
 void ATRPGPlayerController::OnMoveAction()
@@ -300,22 +270,14 @@ void ATRPGPlayerController::OnMoveAction()
     check(ActiveUnit);
 
     ActiveUnit->SetUnitState(EUnitState::ReadyToMove);
-    GameState->GetTerrain()->ShowAvailableTiles(ActiveUnit);
+    GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
 }
 
-void ATRPGPlayerController::OnWaitAction()
+void ATRPGPlayerController::OnEndTurnAction()
 {
-    //TODO en el caso ideal, el boton de Esperar desaparece, ergo, esta accion deberia desaparecer tambien
-    // No obstante, seguramente sea reemplazada por un boton de rotar, para rotar entre unidades de manera similar a la accion de click izquierdo
-    //if (ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>())
-    //{
-    //    MyPlayerState->ChangeState(EUnitState::Idle);
-    //    GetWorld()->GetGameState<ATRPGGameStateBase>()->SetNextTurn();
-    //}
-    //else
-    //{
-    //    checkNoEntry();
-    //}
+    ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+    check(GameState);
+    GameState->SetNextTurn();
 }
 
 void ATRPGPlayerController::OnMoveCameraAction(const FInputActionInstance& Instance)

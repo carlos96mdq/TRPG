@@ -33,6 +33,18 @@ void UHUDWidget::NativeConstruct()
 //	GetWorld()->GetGameState<ATRPGGameStateBase>()->StartGame();
 //}
 
+void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
+{
+	if (bIsPlayerTurn)
+	{
+		ActiveUnitWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
+}
+
 void UHUDWidget::UpdateActiveUnitData(ABaseUnit* Unit)
 { 
 	ActiveUnitWidget->UpdateUnitData(Unit);

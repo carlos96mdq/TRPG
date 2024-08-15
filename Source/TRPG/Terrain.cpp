@@ -9,8 +9,7 @@
 ATerrain::ATerrain()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void ATerrain::BeginPlay()
@@ -57,7 +56,7 @@ void ATerrain::CreateMap()
 	}
 }
 
-void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
+void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 {
 	// First clean any current available tile
 	CleanAvailableTiles();
@@ -210,58 +209,49 @@ void ATerrain::ShowAvailableTiles(ABaseUnit* ActiveUnit)
 		}
 	}
 	
-	//UE_LOG(LogTemp, Warning, TEXT("Finally, %d tiles were catagorized as available"), AvailableTiles.Num());
-
-	int32 EffectIdx = 0;
-	switch (ActiveUnit->GetUnitState())
+	if (bShowTiles)
 	{
-	case EUnitState::ReadyToMove:
-		EffectIdx = 1;
-		break;
-	case EUnitState::ReadyToCombat:
-		EffectIdx = 2;
-		break;
-	default:
-		break;
-	}
+		int32 EffectIdx = 0;
+		switch (ActiveUnit->GetUnitState())
+		{
+		case EUnitState::ReadyToMove:
+			EffectIdx = 1;
+			break;
+		case EUnitState::ReadyToCombat:
+			EffectIdx = 2;
+			break;
+		default:
+			break;
+		}
 
-	// Show in map the selected tiles
-	for (ABaseTile* Tile : AvailableTiles)
-	{
-		//float PosX = Tile->GetActorLocation().X;
-		//float PosY = Tile->GetActorLocation().Y;
-		//UE_LOG(LogTemp, Warning, TEXT("Posición del Tile seleccionado: x:%f, y:%f"), PosX, PosY);
-		Tile->SetGlowingEffect(true, EffectIdx);
+		// Show in map the selected tiles
+		for (ABaseTile* Tile : AvailableTiles)
+		{
+			//float PosX = Tile->GetActorLocation().X;
+			//float PosY = Tile->GetActorLocation().Y;
+			//UE_LOG(LogTemp, Warning, TEXT("Posición del Tile seleccionado: x:%f, y:%f"), PosX, PosY);
+			Tile->SetGlowingEffect(true, EffectIdx);
+		}
 	}
 }
 
 bool ATerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 {
-	auto TileIdx = AvailableTiles.Find(TileNeeded);
+	int32 TileIdx = AvailableTiles.Find(TileNeeded);
 
 	if (TileIdx == INDEX_NONE)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Tile no encontrado"));
 		return false;
-	}
 	else
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Tile encontrado"));
 		return true;
-	}
 }
 
 bool ATerrain::CheckAvailableTile(FVector EnemyPosition)
 {
-	//UE_LOG(LogTemp, Warning, TEXT("Checking if the unit is in an available terrain inside a list of %d tiles"), AvailableTiles.Num());
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
 		FVector EnemyTilePosition = FVector(EnemyPosition.X, EnemyPosition.Y, 0.0f);
 		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
-		{
-			//UE_LOG(LogTemp, Warning, TEXT("It is in an available terrain"))
 			return true;
-		}
 	}
 	return false;
 }
@@ -319,6 +309,17 @@ TArray<FVector> ATerrain::GetPath(ABaseTile* DestinationTile)
 		}
 	}
 	return PathLocations;
+}
+
+const int32 ATerrain::GetTileCost(FVector EnemyPosition) const
+{
+	for (auto i = 0; i < AvailableTiles.Num(); i++)
+	{
+		FVector EnemyTilePosition = FVector(EnemyPosition.X, EnemyPosition.Y, 0.0f);
+		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
+			return AvailableTiles[i]->GetMovementCost();
+	}
+	return -1;
 }
 
 void ATerrain::Tick(float DeltaTime)

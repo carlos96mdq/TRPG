@@ -8,6 +8,7 @@
 #include "BaseUnit.generated.h"
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsMoving, int32)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsAction, int32)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitUpdateStats, int32)
 
 // Enums
@@ -266,8 +267,6 @@ class TRPG_API ABaseUnit : public AActor
 {
 	GENERATED_BODY()
 
-	static bool bDamageTypeModifiersTableLoaded;
-	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -281,8 +280,9 @@ protected:
 
 	void AddCombatAction(FName ActionName);
 
-	// Unit data
+	// General Data
 	bool bIsPlayer = false;
+	bool bIsAlive = true;
 	int32 UnitPlayerIndex = -1;
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
@@ -290,23 +290,23 @@ protected:
 	EUnitType SubType = EUnitType::None;
 	EUnitState CurrentState = EUnitState::Idle;
 	
-	TArray<int32> BaseStats;				// List of unit base stats derived from the archetype
+	// Stats and Status
+	TArray<int32> BaseStats;
 	int32 Health = 0;
 	int32 Armor = 0;
 	int32 Energy = 0;
-	
 	TArray<int32> StatsEffects;				// List of active effects that modifier the unit stats
 	TArray<int32> StatusEffects;			// List of active effects that add a status to the unit
-
 	TArray<FCombatActions*> CombatActions;
 	FCombatActions* CurrentCombatAction;
+	ABaseUnit* CurrentObjective;
+	static TArray<TArray<float>> DamageTypeModifiers;
 
 	// Unit passives
 	TArray<FName> KnownPassives;	// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
 
-	static TArray<TArray<float>> DamageTypeModifiers;
-
-	// Units Textures
+	
+	// Graphics Data
 	UPROPERTY()
 	UTexture2D* Icon;
 	UPROPERTY()
@@ -317,8 +317,10 @@ protected:
 	UAnimInstance* Animation;
 	UPROPERTY()
 	UAnimBlueprint* AnimationBP;
+	TQueue<FVector> QueueDestinations;
+	FVector Destination = FVector::ZeroVector;
 
-	// Data Table references
+	// Data Table References
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* UnitsTable;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
@@ -327,10 +329,6 @@ protected:
 	UDataTable* PassivesTable;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* DamageTypeModifiersTable;
-
-	// Movement
-	TQueue<FVector> QueueDestinations;
-	FVector Destination = FVector::ZeroVector;
 
 public:	
 	// Sets default values for this actor's properties
@@ -343,10 +341,11 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	FOnUnitStopsMoving OnUnitStopsMoving;
+	FOnUnitStopsAction OnUnitStopsAction;
 	FOnUnitUpdateStats OnUnitUpdateStats;
 
 	// Called when this unit turn starts
-	void TurnStarts();
+	virtual void TurnStarts();
 
 	// Called when this unit turn ends
 	void TurnEnds();
@@ -361,6 +360,7 @@ public:
 	void SetCombatAction(int32 ActionIdx);
 
 	// The unit uses one of its equipped actions
+	bool TryUsingCurrentAction(ABaseUnit* Objective);
 	void UseCurrentAction(ABaseUnit* Objective);
 
 	// Apply a direct damage to the unit and verify if it dies because of it
@@ -378,16 +378,17 @@ public:
 
 	const EUnitState GetUnitState() const { return CurrentState; }
 	const int32 GetUnitStat(EUnitStats Stat) const;
-	const float GetDamageTypeModifier(EUnitType DamageType);
+	const float GetDamageTypeModifier(EUnitType DamageType) const;
 	const int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
 	const int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }
 	const int32 GetCombatActionEnergyCost(int32 ActionIdx=-1) const;
-	const FName GetName() const { return Archetype; }
+	const FName GetName() const { return Name; }
 	const int32 GetLife() const { return Health; }
 	const int32 GetArmor() const { return Armor; }
 	const int32 GetEnergy() const { return Energy; }
 	UTexture2D* GetIcon() const { return Icon; }
 	const bool IsPlayer() const { return bIsPlayer; }
+	const bool IsAlive() const { return bIsAlive; }
 	const int32 GetUnitPlayerIndex() const { return UnitPlayerIndex; }
 
 	UFUNCTION(BlueprintCallable)

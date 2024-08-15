@@ -34,7 +34,7 @@ class TRPG_API UActiveUnitWidget : public UUserWidget
 	UFUNCTION()
 	void Combat3Pressed();
 	UFUNCTION()
-	void WaitPressed();
+	void EndTurnPressed();
 
 	TArray<UButton*> CombatButtons;
 
@@ -56,9 +56,15 @@ public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UButton* ButtonCombat3;
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UButton* ButtonWait;
+	UButton* ButtonEndTurn;
 
 	// Labels
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UTextBlock* LabelName;
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UTextBlock* LabelLife;
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UTextBlock* LabelArmor;
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UTextBlock* LabelEnergy;
 };

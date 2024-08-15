@@ -18,7 +18,7 @@ void UActiveUnitWidget::NativeConstruct()
 	ButtonCombat2->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat2Pressed);
 	ButtonCombat3->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::Combat3Pressed);
 	ButtonMove->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::MovePressed);
-	ButtonWait->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::WaitPressed);
+	ButtonEndTurn->OnClicked.AddUniqueDynamic(this, &UActiveUnitWidget::EndTurnPressed);
 
 	CombatButtons.Add(ButtonCombat0);
 	CombatButtons.Add(ButtonCombat1);
@@ -55,14 +55,17 @@ void UActiveUnitWidget::MovePressed()
 	GetOwningPlayer<ATRPGPlayerController>()->OnMoveAction();
 }
 
-void UActiveUnitWidget::WaitPressed()
+void UActiveUnitWidget::EndTurnPressed()
 {
-	GetOwningPlayer<ATRPGPlayerController>()->OnWaitAction();
+	GetOwningPlayer<ATRPGPlayerController>()->OnEndTurnAction();
 }
 
 void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 {
 	LabelName->SetText(FText::FromName(ActiveUnit->GetName()));
+	LabelLife->SetText(FText::AsNumber(ActiveUnit->GetLife()));
+	LabelArmor->SetText(FText::AsNumber(ActiveUnit->GetArmor()));
+	LabelEnergy->SetText(FText::AsNumber(ActiveUnit->GetEnergy()));
 
 	if (GetVisibility() != ESlateVisibility::Visible)
 		SetVisibility(ESlateVisibility::Visible);
@@ -70,7 +73,7 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 	if (ActiveUnit->GetUnitState() == EUnitState::Moving || ActiveUnit->GetUnitState() == EUnitState::Combating)
 	{
 		ButtonMove->SetIsEnabled(false);
-		ButtonWait->SetIsEnabled(false);
+		ButtonEndTurn->SetIsEnabled(false);
 
 		for (UButton* Button : CombatButtons)
 			Button->SetIsEnabled(false);
@@ -79,7 +82,7 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 	{
 		int32 UnitEnergy = ActiveUnit->GetEnergy();
 
-		ButtonWait->SetIsEnabled(true);
+		ButtonEndTurn->SetIsEnabled(true);
 		//TODO tambien antes que otra cosa se deberian setear todas las imagenes
 
 		if (UnitEnergy <= 0)

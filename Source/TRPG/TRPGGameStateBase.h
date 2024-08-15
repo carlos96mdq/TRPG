@@ -10,7 +10,9 @@
 // Forward declarations
 class ABaseTile;
 class ABaseUnit;
+class ANpcUnit;
 class ATerrain;
+class ANpcController;
 
 DECLARE_MULTICAST_DELEGATE(FOnGameStarts)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewTurnStarts, bool)	// True states that its the Player's turn, otherwise is an NPC turn
@@ -32,12 +34,17 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ABaseTile> WallTileClass;
 
-	// Base Unit class used to spawn units in world
+	// Unit classes used to spawn units in world
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ABaseUnit> BaseUnitClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ANpcUnit> NpcUnitClass;
 
 	// Class Terrain that manage the map data
 	ATerrain* Terrain;
+
+	// Class that controlles the actions and movements of all npcs in map
+	ANpcController* NpcController;
 	
 	// Array of units that are in the current map
 	TArray<ABaseUnit*> UnitsArray;

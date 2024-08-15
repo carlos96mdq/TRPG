@@ -28,7 +28,7 @@ protected:
 	void MovePressed();
 	
 	UFUNCTION()
-	void WaitPressed();
+	void EndTurnPressed();
 
 public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
@@ -38,5 +38,5 @@ public:
 	UButton* ButtonMove;	
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UButton* ButtonWait;	
+	UButton* ButtonEndTurn;	
 };
