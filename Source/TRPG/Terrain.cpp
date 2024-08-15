@@ -311,7 +311,7 @@ TArray<FVector> ATerrain::GetPath(ABaseTile* DestinationTile)
 	return PathLocations;
 }
 
-const int32 ATerrain::GetTileCost(FVector EnemyPosition) const
+int32 ATerrain::GetTileCost(FVector EnemyPosition) const
 {
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{

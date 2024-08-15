@@ -55,5 +55,5 @@ public:
 	// Get all the tiles that compund the path from the current position to the destination
 	TArray<FVector> GetPath(ABaseTile* DestinationTile);
 
-	const int32 GetTileCost(FVector EnemyPosition) const;
+	int32 GetTileCost(FVector EnemyPosition) const;
 };

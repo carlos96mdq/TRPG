@@ -421,7 +421,7 @@ bool ABaseUnit::HasActionEquipped(int32 CombatActionIndex) const
 		return false;
 }
 
-const int32 ABaseUnit::GetCombatActionEnergyCost(int32 ActionIdx) const
+int32 ABaseUnit::GetCombatActionEnergyCost(int32 ActionIdx) const
 {
 	if (ActionIdx == -1)
 	{
@@ -436,7 +436,7 @@ const int32 ABaseUnit::GetCombatActionEnergyCost(int32 ActionIdx) const
 	}
 }
 
-const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
+int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 {
 	int32 StatValue = 0;
 	
@@ -479,7 +479,7 @@ const int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 	return StatValue;
 }
 
-const float ABaseUnit::GetDamageTypeModifier(EUnitType DamageType) const
+float ABaseUnit::GetDamageTypeModifier(EUnitType DamageType) const
 {
 	float ResistanceValue = DamageTypeModifiers[(int32)DamageType][(int32)Type];
 	UE_LOG(LogTemp, Display, TEXT("[TESTING] The damage modifier got from the attack type %d and defender type %d was: %f"), (int32)DamageType, (int32)Type, ResistanceValue);

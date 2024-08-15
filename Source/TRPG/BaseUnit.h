@@ -376,24 +376,24 @@ public:
 
 	bool HasActionEquipped(int32 CombatActionIndex) const;
 
-	const EUnitState GetUnitState() const { return CurrentState; }
-	const int32 GetUnitStat(EUnitStats Stat) const;
-	const float GetDamageTypeModifier(EUnitType DamageType) const;
-	const int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
-	const int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }
-	const int32 GetCombatActionEnergyCost(int32 ActionIdx=-1) const;
-	const FName GetName() const { return Name; }
-	const int32 GetLife() const { return Health; }
-	const int32 GetArmor() const { return Armor; }
-	const int32 GetEnergy() const { return Energy; }
+	EUnitState GetUnitState() const { return CurrentState; }
+	int32 GetUnitStat(EUnitStats Stat) const;
+	float GetDamageTypeModifier(EUnitType DamageType) const;
+	int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
+	int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }
+	int32 GetCombatActionEnergyCost(int32 ActionIdx=-1) const;
+	FName GetName() const { return Name; }
+	int32 GetLife() const { return Health; }
+	int32 GetArmor() const { return Armor; }
+	int32 GetEnergy() const { return Energy; }
 	UTexture2D* GetIcon() const { return Icon; }
-	const bool IsPlayer() const { return bIsPlayer; }
-	const bool IsAlive() const { return bIsAlive; }
-	const int32 GetUnitPlayerIndex() const { return UnitPlayerIndex; }
+	bool IsPlayer() const { return bIsPlayer; }
+	bool IsAlive() const { return bIsAlive; }
+	int32 GetUnitPlayerIndex() const { return UnitPlayerIndex; }
 
 	UFUNCTION(BlueprintCallable)
-	const bool IsMoving() const { return CurrentState == EUnitState::Moving; }
+	bool IsMoving() const { return CurrentState == EUnitState::Moving; }
 
 	UFUNCTION(BlueprintCallable)
-	const bool IsAttacking() const { return CurrentState == EUnitState::Combating; }
+	bool IsAttacking() const { return CurrentState == EUnitState::Combating; }
 };

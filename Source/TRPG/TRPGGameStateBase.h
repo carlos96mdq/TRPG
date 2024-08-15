@@ -82,5 +82,5 @@ public:
 	// In this case the BaseUnit returned is the one with the offset with the ActiveUnit in the UnitsArray 
 	ABaseUnit* GetUnitByActiveUnitReference(int32 offset);
 	ABaseUnit* GetUnitByIndex(int32 Index);
-	const int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
+	int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
 };
