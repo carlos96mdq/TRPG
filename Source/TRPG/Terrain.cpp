@@ -28,7 +28,7 @@ void ATerrain::CreateMap()
 
 		for (auto i = 0; i < MapMaxRows; i++)
 		{
-			for (size_t j = 0; j < MapMaxColumns; j++)
+			for (int32 j = 0; j < MapMaxColumns; j++)
 			{
 				TSubclassOf<ABaseTile> UsedTile;
 				
@@ -78,8 +78,7 @@ void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 	}
 
 	// Get the current location of all units
-	TArray<FVector> AllUnitLocations;
-	Cast<ATRPGGameStateBase>(GetWorld()->GetGameState())->GetAllUnitLocations(AllUnitLocations);
+	TArray<FVector> AllUnitLocations = Cast<ATRPGGameStateBase>(GetWorld()->GetGameState())->GetAllUnitLocations();
 
 	// Get all tiles meet the max range requirement and are no obstacle tiles (walls tiles e.g.)
 	// Save all obstacle tiles to use when attacking

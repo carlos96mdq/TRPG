@@ -90,7 +90,7 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 		else
 			ButtonMove->SetIsEnabled(true);
 
-		for (size_t i = 0; i < CombatButtons.Num(); i++)
+		for (int32 i = 0; i < CombatButtons.Num(); i++)
 		{
 			UButton* CombatButton = CombatButtons[i];
 

@@ -118,7 +118,7 @@ public:
 	void SetNextTurn(bool bFirstTurn=false);
 
 	// Fill a reference TArray with the current location of all units
-	void GetAllUnitLocations(TArray<FVector> &Locations);
+	TArray<FVector> GetAllUnitLocations();
 
 	FOnGameStarts OnGameStarts;
 	FOnNewTurnStarts OnNewTurnStarts;

@@ -39,7 +39,7 @@ void UMMUnitsSelectionWidget::SetSelectableUnits()
 
 	int32 UnitsQuantity = MyPlayerState->GetUnitsQuantity();
 
-	for (size_t i = 0; i < UnitsQuantity; i++)
+	for (int32 i = 0; i < UnitsQuantity; i++)
 	{
 		UTexture2D* Icon = MyPlayerState->GetUnitIcon(i);
 		if (Icon)

@@ -150,12 +150,14 @@ void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
 	OnNewTurnStarts.Broadcast(bIsPlayerTurn);
 }
 
-void ATRPGGameStateBase::GetAllUnitLocations(TArray<FVector>& Locations)
+TArray<FVector> ATRPGGameStateBase::GetAllUnitLocations()
 {
+	TArray<FVector> Locations;
+
 	for (ABaseUnit* Unit : UnitsArray)
-	{
 		Locations.Emplace(Unit->GetActorLocation());
-	}
+
+	return Locations;
 }
 
 ABaseUnit* ATRPGGameStateBase::GetActiveUnit()
