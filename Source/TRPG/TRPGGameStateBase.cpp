@@ -160,32 +160,6 @@ TArray<FVector> ATRPGGameStateBase::GetAllUnitLocations()
 	return Locations;
 }
 
-ABaseUnit* ATRPGGameStateBase::GetActiveUnit()
-{
-	check(UnitsArray[ActiveUnitIndex]);
-	return UnitsArray[ActiveUnitIndex];
-}
-
-ABaseUnit* ATRPGGameStateBase::GetUnitByActiveUnitReference(int32 offset)
-{
-	// Get unit index
-	int32 UnitIndex = ActiveUnitIndex + offset;
-	
-	// Check if the index is insedi the array, else get a valid index 
-	if (UnitIndex >= UnitsArray.Num())
-	{
-		int32 OverloadQuantity = FMath::Floor(UnitIndex / UnitsArray.Num());
-		UnitIndex = UnitIndex - UnitsArray.Num() * OverloadQuantity;
-	}
-	else if (UnitIndex < 0)
-	{
-		int32 OverloadQuantity = FMath::Floor(FMath::Abs(UnitIndex) / UnitsArray.Num());
-		UnitIndex = UnitIndex + UnitsArray.Num() * (OverloadQuantity + 1);
-	}
-	
-	return UnitsArray[UnitIndex];
-}
-
 ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index)
 {
 	if (Index >= 0 && Index < UnitsArray.Num())

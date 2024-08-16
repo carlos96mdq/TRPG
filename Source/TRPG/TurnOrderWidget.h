@@ -22,8 +22,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void NativeConstruct() override;
 
-	// Binded to ActiveUnit setting function in GameState to refresh its data in this widget
-	void SetTurnOrder(ABaseUnit* ActiveUnit);
+	//// Binded to ActiveUnit setting function in GameState to refresh its data in this widget
+	//void SetTurnOrder(ABaseUnit* ActiveUnit);
 
 public:
 	// Labels

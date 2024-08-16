@@ -127,9 +127,6 @@ public:
 	const TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
 	const TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
 	ATerrain* GetTerrain() const { return Terrain; };
-	ABaseUnit* GetActiveUnit();
-	// In this case the BaseUnit returned is the one with the offset with the ActiveUnit in the UnitsArray 
-	ABaseUnit* GetUnitByActiveUnitReference(int32 offset);
 	ABaseUnit* GetUnitByIndex(int32 Index);
 	int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
 	float GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const;
