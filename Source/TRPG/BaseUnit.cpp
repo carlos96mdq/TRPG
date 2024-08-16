@@ -2,9 +2,8 @@
 
 
 #include "BaseUnit.h"
+#include "TRPGGameStateBase.h"
 #include "Animation/AnimInstance.h"
-
-TArray<TArray<float>> ABaseUnit::DamageTypeModifiers;
 
 ABaseUnit::ABaseUnit()
 {
@@ -80,29 +79,6 @@ void ABaseUnit::BeginPlay()
 	}
 	//Model3DComponent->SetAnimClass(AnimationBP->GetClass());
 	//Model3DComponent->SetAnimInstance(Animation);
-
-	// As the DamageTypeModifiers TArray is static, only initialize it the first time that it's called
-	if (DamageTypeModifiers.IsEmpty())
-	{
-		check(DamageTypeModifiersTable);
-		TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
-
-		// Initialize all the elements in one so the case of Type::None is covered
-		TArray<float> InitializationArray;
-		InitializationArray.Init(1, (int32)EUnitType::MAX);
-		DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
-
-		for (int32 Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
-		{
-			for (int32 Defender = 1; Defender < WARDTArray.Num(); Defender++)
-			{
-				DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
-			}
-		}
-
-		//UE_LOG(LogTemp, Display, TEXT("[TESTING] The DamageTypeModifieres array was filled, and this are the values:"));
-
-	}
 }
 
 void ABaseUnit::TurnStarts()
@@ -481,10 +457,9 @@ int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 
 float ABaseUnit::GetDamageTypeModifier(EUnitType DamageType) const
 {
-	float ResistanceValue = DamageTypeModifiers[(int32)DamageType][(int32)Type];
-	UE_LOG(LogTemp, Display, TEXT("[TESTING] The damage modifier got from the attack type %d and defender type %d was: %f"), (int32)DamageType, (int32)Type, ResistanceValue);
-	ResistanceValue *= DamageTypeModifiers[(int32)DamageType][(int32)SubType];
-	UE_LOG(LogTemp, Display, TEXT("[TESTING] The damage modifier got from adding the previous value to the new value from the attack type %d and defender subtype %d was: %f"), (int32)DamageType, (int32)SubType, ResistanceValue);
-	//ResistanceValue *= GetWorld()->GetGameState<ATRPGGameStateBase>()->GetDamageTypeModifier((int32)DamageType, (int32)SubType);
+	ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+	check(GameState);
+
+	float ResistanceValue = GameState->GetDamageTypeModifier((int32)DamageType, (int32)Type, (int32)SubType);
 	return ResistanceValue;
 }

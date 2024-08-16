@@ -120,51 +120,6 @@ enum class EObjectiveType : uint8 {
 };
 
 // Structs
-// Struct to create a Data Table that contains all the unit damage types relations
-USTRUCT(BlueprintType)
-struct FDamageTypeModifiers : public FTableRowBase
-{
-	GENERATED_USTRUCT_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Bug = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Dark = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Dragon = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Electric = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Fairy = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Fighting = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Fire = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Flying = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Ghost = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Grass = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Ground = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Normal = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Ice = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Posion = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Psychic = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Rock = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Steel = 1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-		float Water = 1;
-};
-
 // Struct that defines the effects used inside the CombatActions and Pasives data tables
 USTRUCT()
 struct FEffects : public FTableRowBase
@@ -300,7 +255,6 @@ protected:
 	TArray<FCombatActions*> CombatActions;
 	FCombatActions* CurrentCombatAction;
 	ABaseUnit* CurrentObjective;
-	static TArray<TArray<float>> DamageTypeModifiers;
 
 	// Unit passives
 	TArray<FName> KnownPassives;	// Name of combat actions known by the units. A FName is saved so it can be search in a Data Table
@@ -327,9 +281,7 @@ protected:
 	UDataTable* CombatActionsTable;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UDataTable* PassivesTable;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UDataTable* DamageTypeModifiersTable;
-
+	
 public:	
 	// Sets default values for this actor's properties
 	ABaseUnit();

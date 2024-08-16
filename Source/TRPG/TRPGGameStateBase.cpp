@@ -27,6 +27,21 @@ void ATRPGGameStateBase::BeginPlay()
 	FName SelectedUnitName = FName("Bulbasaur");	//TODO eliminar esto y dejar el de abajo
 	//FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
 
+	// Load the Damage Type Modifiers datatable in a local array
+	check(DamageTypeModifiersTable);
+	TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
+	TArray<float> InitializationArray;
+	InitializationArray.Init(1, (int32)EUnitType::MAX);
+	DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
+
+	for (int32 Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
+	{
+		for (int32 Defender = 1; Defender < WARDTArray.Num(); Defender++)
+		{
+			DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
+		}
+	}
+
 	// If exist, spawn selected unit, else, spawn a default unit
 	int32 NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
 		BaseUnitClass,
@@ -175,4 +190,10 @@ ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index)
 		return UnitsArray[Index];
 	else
 		return nullptr;
+}
+
+float ATRPGGameStateBase::GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const
+{
+	float ResistanceValue = DamageTypeModifiers[DamageType][DefenderType] * DamageTypeModifiers[DamageType][DefenderSubType];
+	return ResistanceValue;
 }

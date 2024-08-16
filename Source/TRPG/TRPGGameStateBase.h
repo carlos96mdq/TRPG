@@ -18,6 +18,50 @@ DECLARE_MULTICAST_DELEGATE(FOnGameStarts)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewTurnStarts, bool)	// True states that its the Player's turn, otherwise is an NPC turn
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveUnitSet, ABaseUnit*)
 
+USTRUCT(BlueprintType)
+struct FDamageTypeModifiers : public FTableRowBase
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Bug = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Dark = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Dragon = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Electric = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Fairy = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Fighting = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Fire = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Flying = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Ghost = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Grass = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Ground = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Normal = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Ice = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Posion = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Psychic = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Rock = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Steel = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Water = 1;
+};
+
 /**
  * 
  */
@@ -40,6 +84,8 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<ANpcUnit> NpcUnitClass;
 
+	TArray<TArray<float>> DamageTypeModifiers;
+
 	// Class Terrain that manage the map data
 	ATerrain* Terrain;
 
@@ -57,6 +103,9 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UDataTable* DamageTypeModifiersTable;
 
 public:
 
@@ -83,4 +132,5 @@ public:
 	ABaseUnit* GetUnitByActiveUnitReference(int32 offset);
 	ABaseUnit* GetUnitByIndex(int32 Index);
 	int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
+	float GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const;
 };
