@@ -46,6 +46,5 @@ void ANpcUnit::SetAiState(EAiState NewState)
 
 void ANpcUnit::SetCurrentObjective(ABaseUnit* NewObjective)
 {
-	check(NewObjective);
 	CurrentObjective = NewObjective;
 }

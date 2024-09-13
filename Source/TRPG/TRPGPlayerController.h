@@ -14,6 +14,7 @@ class UUnitDataIcon;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionInstance;
+enum class EUnitControllerOwner : uint8;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveUnitSet, ABaseUnit*)
 
@@ -24,25 +25,6 @@ UCLASS()
 class TRPG_API ATRPGPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	virtual void PostInitializeComponents() override;
-
-	// The left click is used to select the active unit or see data about an enemy unit
-	void OnMouseLeftClicked();
-	
-	// The right click is used to perform an action with an active unit, as move, attack or any else
-	void OnMouseRightClicked();
-
-	// This function is called at the start of a match. It should check for all the units in the maps, identify the player's one
-	// and register each one, creating an UUnitDataIcon for them in the process
-	void CreateUnitsData();
-
-	void NewTurnStarts(bool bIsPlayer);
-
-	void SetActiveUnit(ABaseUnit* NewActiveUnit);
 
 	bool bIsPlayerTurn = false;
 
@@ -59,6 +41,29 @@ class TRPG_API ATRPGPlayerController : public APlayerController
 
 	// MainArena Camera	--TODO esto deberia ver donde ponerlo, lo mejor creo que seria spawnearlo en el PlayerState, ahora lo dejo aca para probar facilmente
 	ACameraActor* MainCamera;
+
+	EUnitControllerOwner ControllerOwnerName;
+
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+	virtual void PostInitializeComponents() override;
+
+	// The left click is used to select the active unit or see data about an enemy unit
+	void OnMouseLeftClicked();
+
+	// The right click is used to perform an action with an active unit, as move, attack or any else
+	void OnMouseRightClicked();
+
+	// This function is called at the start of a match. It should check for all the units in the maps, identify the player's one
+	// and register each one, creating an UUnitDataIcon for them in the process
+	void RegisterAllUnits();
+
+	void NewTurnStarts(EUnitControllerOwner ControllerTurn);
+
+	void SetActiveUnit(ABaseUnit* NewActiveUnit);
+
+	void GameOver(EUnitControllerOwner WinnerController);
 
 public:
 	ATRPGPlayerController();
@@ -79,6 +84,8 @@ public:
 	
 	// Called by action widget when EndTurn action is pressed
 	void OnEndTurnAction();
+
+	void OnRestartAction();
 
 	// Called when players press action to move camera
 	void OnMoveCameraAction(const FInputActionInstance& Instance);

@@ -7,6 +7,7 @@
 #include "NpcController.generated.h"
 
 class ANpcUnit;
+enum class EUnitControllerOwner : uint8;
 
 UCLASS()
 class TRPG_API ANpcController : public AActor
@@ -14,24 +15,26 @@ class TRPG_API ANpcController : public AActor
 	GENERATED_BODY()
 	
 	bool bIsNpcTurn = false;
-	bool bWatingForNpcResponse = false;
+	bool bCheckForNextAction = false;
+	EUnitControllerOwner ControllerOwnerName;
 
 	TArray<ANpcUnit*> NpcUnits;
 
 	void RegisterAllNpcs();
-	void NewTurnStarts(bool bIsPlayer);
+	void NewTurnStarts(EUnitControllerOwner ControllerTurn);
 	void CheckForNextAction();
+	void GameOver(EUnitControllerOwner WinnerController);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Sets default values for this actor's properties
 	ANpcController();
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void OnUnitStops(int32 UnitIndex);
+	void OnUnitStops(int32 NpcUnitIndex);
+	void OnUnitUpdateStats(int32 NpcUnitIndex);
 };

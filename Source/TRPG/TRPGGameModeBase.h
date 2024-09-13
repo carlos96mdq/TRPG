@@ -14,4 +14,7 @@ class TRPG_API ATRPGGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	ATRPGGameModeBase(const FObjectInitializer& ObjectInitializer);
+
+public:
+	void RestartGame();
 };

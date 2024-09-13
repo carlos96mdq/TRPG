@@ -5,6 +5,7 @@
 #include "BaseUnit.h"
 #include "BaseTile.h"
 #include "TRPGGameStateBase.h"
+#include "TRPGGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Terrain.h"
 #include "Blueprint/UserWidget.h"
@@ -27,6 +28,9 @@ ATRPGPlayerController::ATRPGPlayerController()
     bEnableClickEvents = true;
     bEnableMouseOverEvents = true;
 
+    // By default set this as the PlayerController. In the future, multiples Players could exist so each PlayerController should be set with its own enum id
+    ControllerOwnerName = EUnitControllerOwner::PlayerController1;
+
     // Spawn this here, so the camera appears in the editor level so it can be positioned there
     /*MainCamera = GetWorld()->SpawnActor<ACameraActor>();*/
 }
@@ -35,8 +39,9 @@ void ATRPGPlayerController::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
-    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnGameStarts.AddUObject(this, &ATRPGPlayerController::CreateUnitsData);
+    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnGameStarts.AddUObject(this, &ATRPGPlayerController::RegisterAllUnits);
     GetWorld()->GetGameState<ATRPGGameStateBase>()->OnNewTurnStarts.AddUObject(this, &ATRPGPlayerController::NewTurnStarts);
+    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnGameOver.AddUObject(this, &ATRPGPlayerController::GameOver);
 }
 
 void ATRPGPlayerController::SetupInputComponent()
@@ -81,7 +86,7 @@ void ATRPGPlayerController::SetupInputComponent()
 void ATRPGPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-    
+
     MainCamera = GetWorld()->SpawnActor<ACameraActor>(FVector(200.0f, 500.0f, 600.0f), FRotator(-60.0f, -45.0f, 0.0f));
 }
 
@@ -93,16 +98,16 @@ void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
     check(ActiveUnit);
 
     ActiveUnit->SetUnitState(EUnitState::Idle);
-    GameState->GetTerrain()->CleanAvailableTiles();
 
-    PlayerActiveUnitIndex = NewActiveUnit->GetUnitPlayerIndex();
+    PlayerActiveUnitIndex = NewActiveUnit->GetUnitRegistrationIndex();
     OnMoveAction();
 
+    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The unit %s was set as the Player's active unit"), *(NewActiveUnit->GetUnitName()).ToString());
+
     HUDWidget->UpdateActiveUnitData(NewActiveUnit);
-    //OnActiveUnitSet.Broadcast(NewActiveUnit);
 }
 
-void ATRPGPlayerController::CreateUnitsData()
+void ATRPGPlayerController::RegisterAllUnits()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
     check(GameState);
@@ -115,10 +120,10 @@ void ATRPGPlayerController::CreateUnitsData()
 
         // Only if the Unit is a Player's one, create the UnitDataIconWidget element, add it to the HUD in viewport and set the unit data in it
         // Also, register the unit's index to be called later and relate it to the interface
-        if (Unit->IsPlayer())
+        if (Unit->GetControllerOwner() == ControllerOwnerName)
         {
             PlayerUnits.Emplace(Unit);
-            Unit->SetUnitPlayerIndex(UnitIndex);
+            Unit->SetUnitRegistrationIndex(UnitIndex);
 
             UnitDataIconList.Emplace(CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
             check(UnitDataIconList[UnitIndex]);
@@ -138,15 +143,23 @@ void ATRPGPlayerController::CreateUnitsData()
     }
 }
 
-void ATRPGPlayerController::NewTurnStarts(bool bIsPlayer)
+void ATRPGPlayerController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
 {
-    bIsPlayerTurn = bIsPlayer;
-    HUDWidget->SetPlayerTurn(bIsPlayer);
+    bIsPlayerTurn = ControllerTurn == ControllerOwnerName;
+    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] NewTurnStarts() with the bIsPlayerTurn of %s"), (bIsPlayerTurn ? TEXT("true") : TEXT("false")));
+    
+    HUDWidget->SetPlayerTurn(bIsPlayerTurn);
 
-    if (bIsPlayerTurn)
+    if (ControllerTurn == ControllerOwnerName)
     {
-        //TODO en realidad en esta parte deberia iterar entre todas las unidades ahsta encotnrar la primera no muerta
-        SetActiveUnit(PlayerUnits[0]);
+        for (ABaseUnit* Unit : PlayerUnits)
+        {
+            if (Unit->IsAlive())
+            {
+                SetActiveUnit(Unit);
+                break;
+            }
+        }
     }
     else
     {
@@ -154,6 +167,12 @@ void ATRPGPlayerController::NewTurnStarts(bool bIsPlayer)
         check(GameState);
         GameState->GetTerrain()->CleanAvailableTiles();
     }
+}
+
+void ATRPGPlayerController::GameOver(EUnitControllerOwner WinnerController)
+{
+    bIsPlayerTurn = false;
+    HUDWidget->GameOver(WinnerController == ControllerOwnerName);
 }
 
 void ATRPGPlayerController::OnMouseLeftClicked()
@@ -172,7 +191,7 @@ void ATRPGPlayerController::OnMouseLeftClicked()
     {
         if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
         {
-            if (HitUnit->IsPlayer() && HitUnit->GetUnitPlayerIndex() != PlayerActiveUnitIndex)
+            if (HitUnit->GetControllerOwner() == ControllerOwnerName && HitUnit->GetUnitRegistrationIndex() != PlayerActiveUnitIndex)
                 SetActiveUnit(HitUnit);
         }
     }
@@ -241,11 +260,47 @@ void ATRPGPlayerController::OnUnitUpdateStats(int32 PlayerUnitIndex)
     ABaseUnit* Unit = PlayerUnits[PlayerUnitIndex];
     check(Unit);
 
-    UnitDataIconList[PlayerUnitIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-    UnitDataIconList[PlayerUnitIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-    UnitDataIconList[PlayerUnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-    UnitDataIconList[PlayerUnitIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+    if (Unit->IsAlive())
+    {
+        UnitDataIconList[PlayerUnitIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+        UnitDataIconList[PlayerUnitIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+        UnitDataIconList[PlayerUnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+        UnitDataIconList[PlayerUnitIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+    }
+    else
+    {
+        //TODO esto es mas para probar. Despues deberia verse que objeto poner y una manera optima de cargarse, tal vez usando LoadSynchronous
+        UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
+        if (DefeatTexture)
+            UnitDataIconList[PlayerUnitIndex]->UnitIcon->SetBrushFromTexture(DefeatTexture);
 
+        //TODO deberia hacer algo mas personalizado o esteticamente correcto
+        UnitDataIconList[PlayerUnitIndex]->UnitArmor->SetText(FText::AsNumber(0));
+        UnitDataIconList[PlayerUnitIndex]->UnitLife->SetText(FText::AsNumber(0));
+        UnitDataIconList[PlayerUnitIndex]->UnitEnergy->SetText(FText::AsNumber(0));
+
+        // PlayerController needs to check if there is at least an alive PlayerUnit, otherwise the PlayerController lost the game
+        bool bAllPlayersAreDead = true;
+
+        for (ABaseUnit* UnitToCheck : PlayerUnits)
+        {
+            if (UnitToCheck->IsAlive())
+            {
+                bAllPlayersAreDead = false;
+                break;
+            }
+        }
+
+        if (bAllPlayersAreDead)
+        {
+            ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+            check(GameState);
+
+            GameState->ControllerLostGame(ControllerOwnerName);
+        }
+    }
+
+    //TODO despues deberia ver algo con el tema de si justo muere la active unit (seria como un daño rebote)
     if (PlayerUnitIndex == PlayerActiveUnitIndex)
         HUDWidget->UpdateActiveUnitData(Unit);
 }
@@ -268,7 +323,7 @@ void ATRPGPlayerController::OnMoveAction()
     check(GameState);
     ABaseUnit* ActiveUnit = PlayerUnits[PlayerActiveUnitIndex];
     check(ActiveUnit);
-
+    
     ActiveUnit->SetUnitState(EUnitState::ReadyToMove);
     GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
 }
@@ -278,6 +333,13 @@ void ATRPGPlayerController::OnEndTurnAction()
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
     check(GameState);
     GameState->SetNextTurn();
+}
+
+void ATRPGPlayerController::OnRestartAction()
+{
+    ATRPGGameModeBase* GameMode = Cast<ATRPGGameModeBase>(GetWorld()->GetAuthGameMode());
+    check(GameMode);
+    GameMode->RestartGame();
 }
 
 void ATRPGPlayerController::OnMoveCameraAction(const FInputActionInstance& Instance)

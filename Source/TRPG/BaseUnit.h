@@ -10,6 +10,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsMoving, int32)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsAction, int32)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitUpdateStats, int32)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitDies, int32)
 
 // Enums
 UENUM()
@@ -117,6 +118,14 @@ enum class EObjectiveType : uint8 {
 	Enemy,
 	Enemies,
 	Zone
+};
+
+UENUM()
+enum class EUnitControllerOwner : uint8 {
+	None,
+	PlayerController1,
+	NpcController
+	
 };
 
 // Structs
@@ -235,10 +244,12 @@ protected:
 
 	void AddCombatAction(FName ActionName);
 
+	void UnitDies();
+
 	// General Data
-	bool bIsPlayer = false;
 	bool bIsAlive = true;
-	int32 UnitPlayerIndex = -1;
+	EUnitControllerOwner ControllerOwner = EUnitControllerOwner::None;
+	int32 UnitRegistrationIndex = -1;
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
 	EUnitType Type = EUnitType::None;
@@ -287,7 +298,7 @@ public:
 	ABaseUnit();
 
 	// Initialize the unit with some parameters needed to get the unit data from the data tables
-	void Init(FName NewArchetype, bool IsPlayer=false);
+	void Init(FName NewArchetype, EUnitControllerOwner NewOwner);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -295,6 +306,7 @@ public:
 	FOnUnitStopsMoving OnUnitStopsMoving;
 	FOnUnitStopsAction OnUnitStopsAction;
 	FOnUnitUpdateStats OnUnitUpdateStats;
+	FOnUnitDies OnUnitDies;
 
 	// Called when this unit turn starts
 	virtual void TurnStarts();
@@ -324,7 +336,7 @@ public:
 	// Set the Unit State and send a message to all object that need to know about it
 	void SetUnitState(EUnitState NewState);
 
-	void SetUnitPlayerIndex(int32 NewIdx) { UnitPlayerIndex = NewIdx; }
+	void SetUnitRegistrationIndex(int32 NewIdx) { UnitRegistrationIndex = NewIdx; }
 
 	bool HasActionEquipped(int32 CombatActionIndex) const;
 
@@ -334,14 +346,14 @@ public:
 	int32 GetCombatActionRangeMin() const { return CurrentCombatAction->MinRange; }
 	int32 GetCombatActionRangeMax() const { return CurrentCombatAction->MaxRange; }
 	int32 GetCombatActionEnergyCost(int32 ActionIdx=-1) const;
-	FName GetName() const { return Name; }
+	FName GetUnitName() const { return Name; }
 	int32 GetLife() const { return Health; }
 	int32 GetArmor() const { return Armor; }
 	int32 GetEnergy() const { return Energy; }
 	UTexture2D* GetIcon() const { return Icon; }
-	bool IsPlayer() const { return bIsPlayer; }
+	EUnitControllerOwner GetControllerOwner() const { return ControllerOwner; }
 	bool IsAlive() const { return bIsAlive; }
-	int32 GetUnitPlayerIndex() const { return UnitPlayerIndex; }
+	int32 GetUnitRegistrationIndex() const { return UnitRegistrationIndex; }
 
 	UFUNCTION(BlueprintCallable)
 	bool IsMoving() const { return CurrentState == EUnitState::Moving; }

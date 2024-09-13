@@ -4,7 +4,9 @@
 #include "HUDWidget.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
+#include "Components/Overlay.h"
 #include "TRPGGameStateBase.h"
+#include "TRPGPlayerController.h"
 #include "ActiveUnitWidget.h"
 #include "SelectedUnitWidget.h"
 #include "TurnOrderWidget.h"
@@ -14,6 +16,7 @@ void UHUDWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
+	GameOverScreen->SetVisibility(ESlateVisibility::Collapsed);
 	//LoadScreen->SetVisibility(ESlateVisibility::Visible);
 
 	//PlayButton->OnClicked.AddUniqueDynamic(this, &UHUDWidget::PlayPressed);
@@ -33,6 +36,12 @@ void UHUDWidget::NativeConstruct()
 //	GetWorld()->GetGameState<ATRPGGameStateBase>()->StartGame();
 //}
 
+void UHUDWidget::RestartPressed()
+{
+	GetOwningPlayer<ATRPGPlayerController>()->OnRestartAction();
+}
+
+
 void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 {
 	if (bIsPlayerTurn)
@@ -48,4 +57,32 @@ void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 void UHUDWidget::UpdateActiveUnitData(ABaseUnit* Unit)
 { 
 	ActiveUnitWidget->UpdateUnitData(Unit);
+}
+
+void UHUDWidget::GameOver(bool bPlayerWon)
+{
+	FText CustomText;
+
+	if (bPlayerWon)
+		CustomText = FText::FromString("You Win!");
+	else
+		CustomText = FText::FromString("You Lose!");
+
+	// To test other way, I created a function in blueprint and in this code we access that function
+	FName FunctionName(TEXT("SetGameOverText"));
+	UFunction* SetTextFunction = FindFunction(FunctionName);
+
+	if (SetTextFunction)
+	{
+		struct
+		{
+			FText NewText;
+		} Params;
+		Params.NewText = CustomText;
+
+		// Call the function in Blueprint to update the text
+		ProcessEvent(SetTextFunction, &Params);
+	}
+
+	GameOverScreen->SetVisibility(ESlateVisibility::Visible);
 }

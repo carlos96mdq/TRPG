@@ -21,7 +21,7 @@ void USelectedUnitWidget::SetUnitData(ABaseUnit* SelectedUnit)
 	//if (ABaseUnit* SelectedUnit = GetOwningPlayerState<ATRPGPlayerState>()->GetSelectedUnit())
 	if (SelectedUnit)
 	{
-		LabelName->SetText(FText::FromName(SelectedUnit->GetName()));
+		LabelName->SetText(FText::FromName(SelectedUnit->GetUnitName()));
 		SetVisibility(ESlateVisibility::Visible);
 	}
 	else

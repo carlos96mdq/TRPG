@@ -7,7 +7,6 @@
 
 ABaseUnit::ABaseUnit()
 {
-
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -26,10 +25,10 @@ ABaseUnit::ABaseUnit()
 	StatusEffects.Init(0, (int32)EStatusEffects::MAX);
 }
 
-void ABaseUnit::Init(FName NewArchetype, bool IsPlayer)
+void ABaseUnit::Init(FName NewArchetype, EUnitControllerOwner NewOwner)
 {
 	Archetype = NewArchetype;
-	bIsPlayer = IsPlayer;
+	ControllerOwner = NewOwner;
 }
 
 void ABaseUnit::BeginPlay()
@@ -83,6 +82,7 @@ void ABaseUnit::BeginPlay()
 
 void ABaseUnit::TurnStarts()
 {
+	UE_LOG(LogTemp, Display, TEXT("[UNIT TURN] The unit %s started its turn"), *Name.ToString());
 	CurrentState = EUnitState::Idle;
 
 	// TODO	Check if the unit loses its turn
@@ -90,7 +90,7 @@ void ABaseUnit::TurnStarts()
 	Armor = GetUnitStat(EUnitStats::NaturalArmor);
 	Energy = GetUnitStat(EUnitStats::MaxEnergy);
 
-	OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
+	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
 }
 
 void ABaseUnit::TurnEnds()
@@ -113,7 +113,7 @@ void ABaseUnit::OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed)
 void ABaseUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (CurrentState == EUnitState::Moving)
 	{
 		Move(DeltaTime);
@@ -191,8 +191,8 @@ void ABaseUnit::Move(float DeltaTime)
 		if (!QueueDestinations.Dequeue(Destination))
 		{
 			CurrentState = EUnitState::Idle;
-			OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
-			OnUnitStopsMoving.Broadcast(UnitPlayerIndex);
+			OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
+			OnUnitStopsMoving.Broadcast(UnitRegistrationIndex);
 		}
 	}
 }
@@ -215,15 +215,15 @@ void ABaseUnit::SetCombatAction(int32 ActionIdx)
 		check(CurrentCombatAction);
 	}
 	else
-		UE_LOG(LogTemp, Warning, TEXT("[UNIT COMBAT] The Unit is trying to use a Combat Action that doesn't have"));
+		UE_LOG(LogTemp, Warning, TEXT("[COMBAT] The Unit is trying to use a Combat Action that doesn't have"));
 }
 
 bool ABaseUnit::TryUsingCurrentAction(ABaseUnit* Objective)
 {
 	// TODO Verify if this action can be used in that objective
 	// TODO Check for actions effects that are executed before accuracy check
-	UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit try to use the curent action"));
-	if (CurrentCombatAction->Energy <= Energy)
+	UE_LOG(LogTemp, Display, TEXT("[COMBAT] The unit %s tries to use the curent action"), *Name.ToString());
+	if (Objective->IsAlive() && CurrentCombatAction->Energy <= Energy)
 	{
 		CurrentObjective = Objective;
 		CurrentState = EUnitState::Combating;
@@ -231,7 +231,7 @@ bool ABaseUnit::TryUsingCurrentAction(ABaseUnit* Objective)
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[UNIT ACTION] This unit is trying to use an action greater than its energy"));
+		UE_LOG(LogTemp, Warning, TEXT("[COMBAT] The unit %s can't use the action (energy insufficient or invalid objective)"), *Name.ToString());
 		CurrentState = EUnitState::Idle;
 		return false;
 	}
@@ -324,8 +324,8 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	}
 
 	CurrentState = EUnitState::Idle;
-	OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
-	OnUnitStopsAction.Broadcast(UnitPlayerIndex);
+	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
+	OnUnitStopsAction.Broadcast(UnitRegistrationIndex);
 }
 
 void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
@@ -355,17 +355,15 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] Health after damage: %d"), Health);
 
-		// If this unit Helath reaches 0, kill this unit
+		// If this unit Health reaches 0, kill this unit
 		if (Health <= 0)
-		{
-			UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit just died"));
-		}
+			UnitDies();
 	}
 	else
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
 
 	// This event is called to update any visual interface that need to change the units stats
-	OnUnitUpdateStats.Broadcast(UnitPlayerIndex);
+	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
 }
 
 void ABaseUnit::ApplyEffect(const FEffects& Effect)
@@ -382,6 +380,20 @@ void ABaseUnit::ApplyEffect(const FEffects& Effect)
 		check((uint8)Effect.NameStatus < StatusEffects.Num());
 		StatusEffects[(uint8)Effect.NameStatus] += Effect.Value;
 	}
+}
+
+void ABaseUnit::UnitDies()
+{
+	UE_LOG(LogTemp, Display, TEXT("[COMBAT] This unit just died"));
+
+	// Set unit parameters and visual according to the dead state
+	bIsAlive = false;
+	SetActorHiddenInGame(true);
+	SetActorEnableCollision(false);
+	SetActorTickEnabled(false);
+
+	// Let know other objects that this unit dies so all changes needed are made
+	//OnUnitDies.Broadcast(UnitRegistrationIndex);
 }
 
 void ABaseUnit::SetUnitState(EUnitState NewState)

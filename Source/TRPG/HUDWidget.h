@@ -13,6 +13,7 @@ class UTurnOrderWidget;
 class UButton;
 class UImage;
 class UVerticalBox;
+class UOverlay;
 class ABaseUnit;
 
 /**
@@ -27,8 +28,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void NativeConstruct() override;
 
-	//UFUNCTION()
-	//void PlayPressed();
+	UFUNCTION(BlueprintCallable)
+	void RestartPressed();
 
 public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
@@ -36,6 +37,9 @@ public:
 	
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UVerticalBox* PlayerUnits;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UOverlay* GameOverScreen;
 
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	//UImage* LoadScreen;
@@ -45,4 +49,5 @@ public:
 
 	void SetPlayerTurn(bool bIsPlayerTurn);
 	void UpdateActiveUnitData(ABaseUnit* Unit);
+	void GameOver(bool bPlayerWon);
 };

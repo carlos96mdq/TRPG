@@ -62,7 +62,7 @@ void UActiveUnitWidget::EndTurnPressed()
 
 void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 {
-	LabelName->SetText(FText::FromName(ActiveUnit->GetName()));
+	LabelName->SetText(FText::FromName(ActiveUnit->GetUnitName()));
 	LabelLife->SetText(FText::AsNumber(ActiveUnit->GetLife()));
 	LabelArmor->SetText(FText::AsNumber(ActiveUnit->GetArmor()));
 	LabelEnergy->SetText(FText::AsNumber(ActiveUnit->GetEnergy()));

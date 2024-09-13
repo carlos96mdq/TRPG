@@ -76,7 +76,7 @@ void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 		MinRange = ActiveUnit->GetCombatActionRangeMin();
 		MaxRange = ActiveUnit->GetCombatActionRangeMax();
 	}
-
+	
 	// Get the current location of all units
 	TArray<FVector> AllUnitLocations = Cast<ATRPGGameStateBase>(GetWorld()->GetGameState())->GetAllUnitLocations();
 
@@ -175,8 +175,6 @@ void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 		}
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("Then, %d tiles were catagorized as available"), AvailableTiles.Num());
-
 	// Delete all tiles limited by the min range
 	// Or when attacking, delete all tiles that can't be reached because of an obstacle or a min range
 	if (MinRange >= 1 || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
@@ -196,7 +194,6 @@ void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 			if (AvailableTile->GetMovementCost() < MinRange
 				|| GetWorld()->SweepSingleByChannel(HitObstacle, UnitLocation, Destination, FQuat::Identity, ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(1.0f)))
 			{
-				//UE_LOG(LogTemp, Warning, TEXT("Remove this tile because its Movement Cost %d is less than the MinRange %d will be removed"), AvailableTile->GetMovementCost(), MinRange);
 				//DrawDebugCylinder(GetWorld(), UnitLocation, Destination, 1.0f, 5, FColor::Red, true, 10.0f);
 				AvailableTile->SetMovementCost(-1);
 				AvailableTiles.RemoveAtSwap(i);

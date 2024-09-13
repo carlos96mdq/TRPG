@@ -24,8 +24,8 @@ void ATRPGGameStateBase::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
 
 	// Get Unit selected by Player in MainMenu
-	FName SelectedUnitName = FName("Bulbasaur");	//TODO eliminar esto y dejar el de abajo
-	//FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
+	//FName SelectedUnitName = FName("Bulbasaur");	//TODO eliminar esto y dejar el de abajo
+	FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
 
 	// Load the Damage Type Modifiers datatable in a local array
 	check(DamageTypeModifiersTable);
@@ -48,7 +48,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(SelectedUnitName, true);
+	UnitsArray[NewUnitIndex]->Init(SelectedUnitName, EUnitControllerOwner::PlayerController1);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
 
 	// TEST: Create 2 default units
@@ -57,7 +57,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Charmander"), true);
+	UnitsArray[NewUnitIndex]->Init(TEXT("Charmander"), EUnitControllerOwner::PlayerController1);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f)));
 
 	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
@@ -65,7 +65,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 50.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"), true);
+	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"), EUnitControllerOwner::PlayerController1);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
 
 	// TEST: Create a npc
@@ -74,7 +74,7 @@ void ATRPGGameStateBase::BeginPlay()
 		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
 		)
 	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Rattata"), false);
+	UnitsArray[NewUnitIndex]->Init(TEXT("Rattata"), EUnitControllerOwner::NpcController);
 	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f)));
 
 	StartGame();
@@ -85,69 +85,71 @@ void ATRPGGameStateBase::StartGame()
 	// Init random seed
 	FMath::RandInit(FDateTime::Now().GetTicks());
 
-	// DEPRECATED 
-	// Sort the units array according to their velocity
-	/*
-	UnitsArray.Sort([](const ABaseUnit& LeftUnit, const ABaseUnit& RightUnit)
-		{
-			if (LeftUnit.GetUnitStat(EUnitStats::Velocity) > RightUnit.GetUnitStat(EUnitStats::Velocity))
-				return true;
-			else if (LeftUnit.GetUnitStat(EUnitStats::Velocity) == RightUnit.GetUnitStat(EUnitStats::Velocity))
-			{
-				// If 2 units has the same velocity, they ar sorted randomly
-				float RandomValue = FMath::FRand();
-				if (RandomValue > 0.5f)
-					return true;
-				else
-					return false;
-			}
-			else
-				return false;
-		}
-	);
-	*/
-
 	// The function TurnStarts is called in all units so their initial stats like armor can be set
 	for (ABaseUnit* Unit : UnitsArray)
 		Unit->TurnStarts();
 
+	// And the game always starts with the player turn
+	ControllerTurn = EUnitControllerOwner::PlayerController1;
+
 	OnGameStarts.Broadcast();
-	SetNextTurn(true);
+	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from StartGame()"));
+	OnNewTurnStarts.Broadcast(ControllerTurn);
 }
 
-void ATRPGGameStateBase::SetNextTurn(bool bFirstTurn)
+void ATRPGGameStateBase::SetNextTurn()
 {
-	if (!bFirstTurn)
+	for (ABaseUnit* Unit : UnitsArray)
 	{
-		for (ABaseUnit* Unit : UnitsArray)
+		check(Unit);
+		if (Unit->GetControllerOwner() == ControllerTurn && Unit->IsAlive())
 		{
-			check(Unit);
-			if (Unit->IsPlayer() == bIsPlayerTurn)
-			{
-				Unit->TurnEnds();
-			}
+			Unit->TurnEnds();
 		}
 	}
 
 	// Set the next Player. In this case, the turn rotates between the player and the NpcController.
-	if (bIsPlayerTurn)
-		bIsPlayerTurn = false;
-	else
-		bIsPlayerTurn = true;
-
-	if (!bFirstTurn)
+	if (ControllerTurn == EUnitControllerOwner::PlayerController1)
 	{
-		for (ABaseUnit* Unit : UnitsArray)
+		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The AI's turn starts"));
+		ControllerTurn = EUnitControllerOwner::NpcController;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The Player's turn starts"));
+		ControllerTurn = EUnitControllerOwner::PlayerController1;
+	}
+		
+	for (ABaseUnit* Unit : UnitsArray)
+	{
+		check(Unit);
+		if (Unit->GetControllerOwner() == ControllerTurn && Unit->IsAlive())
 		{
-			check(Unit);
-			if (Unit->IsPlayer() == bIsPlayerTurn)
-			{
-				Unit->TurnStarts();
-			}
+			Unit->TurnStarts();
 		}
 	}
+	
+	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from SetNextTurn()"));
+	OnNewTurnStarts.Broadcast(ControllerTurn);
+}
 
-	OnNewTurnStarts.Broadcast(bIsPlayerTurn);
+void ATRPGGameStateBase::ControllerLostGame(EUnitControllerOwner ControllerOwner)
+{
+	//TODO For now the system is going to be implemented so always there is a PlayerController and a NpcController. In the future it could be scaled to multiple players
+	EUnitControllerOwner WinnerController = EUnitControllerOwner::None;
+
+	if (ControllerOwner == EUnitControllerOwner::NpcController)
+	{
+		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Won"));
+		WinnerController = EUnitControllerOwner::PlayerController1;
+	}
+	else if(ControllerOwner == EUnitControllerOwner::PlayerController1)
+	{
+		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Lost"));
+		WinnerController = EUnitControllerOwner::NpcController;
+	}
+
+	OnGameOver.Broadcast(WinnerController);
 }
 
 TArray<FVector> ATRPGGameStateBase::GetAllUnitLocations()

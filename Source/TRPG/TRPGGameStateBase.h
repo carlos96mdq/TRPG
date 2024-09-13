@@ -13,10 +13,12 @@ class ABaseUnit;
 class ANpcUnit;
 class ATerrain;
 class ANpcController;
+enum class EUnitControllerOwner : uint8;
 
 DECLARE_MULTICAST_DELEGATE(FOnGameStarts)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewTurnStarts, bool)	// True states that its the Player's turn, otherwise is an NPC turn
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewTurnStarts, EUnitControllerOwner)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnActiveUnitSet, ABaseUnit*)
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnGameOver, EUnitControllerOwner)
 
 USTRUCT(BlueprintType)
 struct FDamageTypeModifiers : public FTableRowBase
@@ -92,10 +94,10 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	// Class that controlles the actions and movements of all npcs in map
 	ANpcController* NpcController;
 	
+	EUnitControllerOwner ControllerTurn;
+
 	// Array of units that are in the current map
 	TArray<ABaseUnit*> UnitsArray;
-
-	bool bIsPlayerTurn = false;	// As the game is an one player game, this var defines if its the players turn or the npc turn
 
 	// Unit whose turn is the current one
 	int32 ActiveUnitIndex = -1;
@@ -111,11 +113,9 @@ public:
 
 	ATRPGGameStateBase();
 
-	// Initialize the turn-system
 	void StartGame();
-	
-	// Set next turn
-	void SetNextTurn(bool bFirstTurn=false);
+	void SetNextTurn();
+	void ControllerLostGame(EUnitControllerOwner ControllerOwner);
 
 	// Fill a reference TArray with the current location of all units
 	TArray<FVector> GetAllUnitLocations();
@@ -123,6 +123,7 @@ public:
 	FOnGameStarts OnGameStarts;
 	FOnNewTurnStarts OnNewTurnStarts;
 	FOnActiveUnitSet OnActiveUnitSet;
+	FOnGameOver OnGameOver;
 
 	const TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
 	const TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
