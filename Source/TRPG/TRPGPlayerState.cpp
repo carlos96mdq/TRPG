@@ -5,7 +5,8 @@
 #include "BaseTile.h"
 #include "BaseUnit.h"
 #include "Terrain.h"
-#include "PlayerStash.h"
+#include "MySaveGame.h"
+#include "Kismet/GameplayStatics.h"
 #include "TRPGGameStateBase.h"
 
 void ATRPGPlayerState::PostInitializeComponents()
@@ -18,9 +19,40 @@ void ATRPGPlayerState::PostInitializeComponents()
 void ATRPGPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
-
-	PlayerStash = GetWorld()->SpawnActor<APlayerStash>();
 }
+
+void ATRPGPlayerState::AddMatchFinishedToResults(bool PlayerWon)
+{
+	DataToSave.MatchesPlayed++;
+	if (PlayerWon)
+		DataToSave.MatchesWon++;
+	else
+		DataToSave.MatchesLost++;
+}
+
+void ATRPGPlayerState::SavePlayerResults()
+{
+	UMySaveGame* SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
+
+	// If there's already saved data, load it
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("PlayerSaveSlot"), 0))
+	{
+		SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("PlayerSaveSlot"), 0));
+	}
+
+	// Update save data
+	SaveGameInstance->MatchesPlayed += DataToSave.MatchesPlayed;
+	SaveGameInstance->MatchesWon += DataToSave.MatchesWon;
+	SaveGameInstance->MatchesLost += DataToSave.MatchesLost;
+	SaveGameInstance->UnitsDefeated += DataToSave.UnitsDefeated;
+	SaveGameInstance->UnitsLost += DataToSave.UnitsLost;
+
+	UE_LOG(LogTemp, Display, TEXT("[PLAYER STATE] The values of MatchesPlayed %d, MatchesWon = %d and MatchesLost = %d were saved"), SaveGameInstance->MatchesPlayed, SaveGameInstance->MatchesWon, SaveGameInstance->MatchesLost);
+
+	// Save the data back to the slot
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("PlayerSaveSlot"), 0);
+}
+
 
 void ATRPGPlayerState::SetTerrain(ATerrain* TerrainPointer)
 {

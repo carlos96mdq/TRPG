@@ -38,11 +38,19 @@ protected:
 	// Own unit selected at the moment
 	ABaseUnit* SelectedUnit;
 
-	// Reference to the MainCamera
-
+	struct PlayerData
+	{
+		int32 MatchesPlayed = 0;
+		int32 MatchesWon = 0;
+		int32 MatchesLost = 0;
+		int32 UnitsDefeated = 0;
+		int32 UnitsLost = 0;
+	} DataToSave;
 
 public:
 
+	void AddMatchFinishedToResults(bool PlayerWon);
+	void SavePlayerResults();
 
 	// Player stash where saves all items that are not equipped in any unit
 	APlayerStash* PlayerStash;

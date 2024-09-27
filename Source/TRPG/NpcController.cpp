@@ -181,14 +181,14 @@ void ANpcController::OnUnitStops(int32 NpcUnitIndex)
 
 void ANpcController::OnUnitUpdateStats(int32 NpcUnitIndex)
 {
-    ABaseUnit* Unit = NpcUnits[NpcUnitIndex];
+    const ABaseUnit* Unit = NpcUnits[NpcUnitIndex];
     check(Unit);
 
     if (!(Unit->IsAlive()))
     {
         bool bAllUnitsAreDead = true;
 
-        for (ABaseUnit* UnitToCheck : NpcUnits)
+        for (const ABaseUnit* UnitToCheck : NpcUnits)
         {
             if (UnitToCheck->IsAlive())
             {

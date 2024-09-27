@@ -6,10 +6,10 @@
 #include "BaseTile.h"
 #include "TRPGGameStateBase.h"
 #include "TRPGGameModeBase.h"
+#include "TRPGPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Terrain.h"
 #include "Blueprint/UserWidget.h"
-#include "TRPGPlayerState.h"
 #include "ActiveUnitWidget.h"
 #include "HUDWidget.h"
 #include "Components/Image.h"
@@ -172,7 +172,14 @@ void ATRPGPlayerController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
 void ATRPGPlayerController::GameOver(EUnitControllerOwner WinnerController)
 {
     bIsPlayerTurn = false;
-    HUDWidget->GameOver(WinnerController == ControllerOwnerName);
+    bool bPlayerWon = WinnerController == ControllerOwnerName;
+
+    ATRPGPlayerState* MyPlayerState = GetPlayerState<ATRPGPlayerState>();
+    check(MyPlayerState);
+    MyPlayerState->AddMatchFinishedToResults(bPlayerWon);
+    MyPlayerState->SavePlayerResults();
+
+    HUDWidget->GameOver(bPlayerWon);
 }
 
 void ATRPGPlayerController::OnMouseLeftClicked()
