@@ -52,7 +52,6 @@ void ANpcController::RegisterAllNpcs()
         // Register all the units that are npcs to keep a pointer to them and iterate that array when needed
         if (Unit != nullptr && Unit->GetControllerOwner() == ControllerOwnerName)
         {
-            NpcUnits.Emplace(Unit);
             Unit->SetUnitRegistrationIndex(UnitIndex);
             Unit->OnUnitStopsAction.AddUObject(this, &ANpcController::OnUnitStops);
             Unit->OnUnitUpdateStats.AddUObject(this, &ANpcController::OnUnitUpdateStats);
@@ -77,82 +76,82 @@ void ANpcController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
 void ANpcController::CheckForNextAction()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    check(GameState);
 
     bool bAllNpcAreSleeping = true;
 
-    for (ANpcUnit* NpcUnit : NpcUnits)
+    for (int32 j = 0; j < GameState->GetUnitsQuantity(); j++)
     {
-        check(NpcUnit);
-
-        if (NpcUnit->IsAlive() && NpcUnit->GetAiState() == EAiState::WaitingForOrders)
+        if (ANpcUnit* NpcUnit = Cast<ANpcUnit>(GameState->GetUnitByIndex(j)))
         {
-            UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s is going to be check by the Npc Controller"), *(NpcUnit->GetUnitName()).ToString());
-            //TODO acorde al behaviour elijo que hacer
-            //TODO la combat action debera depender de mucahs cosas, por defecto seteo la primera que sera un ataque
-
-            // Set unit into combat mode and try to find a unit to attack
-            NpcUnit->SetCombatAction(0);
-            NpcUnit->SetUnitState(EUnitState::ReadyToCombat);
-            GameState->GetTerrain()->SetAvailableTiles(NpcUnit, false);
-            ABaseUnit* ObjectiveUnit = NpcUnit->GetCurrentObjective();
-
-            // Check if the previous objective still in range, otherwise try to find a new one
-            if (ObjectiveUnit == nullptr || !(ObjectiveUnit->IsAlive()) || !(GameState->GetTerrain()->CheckAvailableTile(ObjectiveUnit->GetActorLocation())))
+            if (NpcUnit->GetControllerOwner() == ControllerOwnerName && NpcUnit->IsAlive() && NpcUnit->GetAiState() == EAiState::WaitingForOrders)
             {
-                UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s doesn't have a valid Objective, so try to find one"), *(NpcUnit->GetUnitName()).ToString());
-                ObjectiveUnit = nullptr;
-                ABaseUnit* PossibleObjectiveUnit = nullptr;
-                int32 PossibleObjectiveUnitDistance = -1;
+                UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s is going to be check by the Npc Controller"), *(NpcUnit->GetUnitName()).ToString());
+                //TODO acorde al behaviour elijo que hacer
+                //TODO la combat action debera depender de mucahs cosas, por defecto seteo la primera que sera un ataque
 
-                for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+                // Set unit into combat mode and try to find a unit to attack
+                NpcUnit->SetCombatAction(0);
+                NpcUnit->SetUnitState(EUnitState::ReadyToCombat);
+                GameState->GetTerrain()->SetAvailableTiles(NpcUnit, false);
+                ABaseUnit* ObjectiveUnit = NpcUnit->GetCurrentObjective();
+
+                // Check if the previous objective still in range, otherwise try to find a new one
+                if (ObjectiveUnit == nullptr || !(ObjectiveUnit->IsAlive()) || !(GameState->GetTerrain()->CheckAvailableTile(ObjectiveUnit->GetActorLocation())))
                 {
-                    PossibleObjectiveUnit = GameState->GetUnitByIndex(i);
+                    UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s doesn't have a valid Objective, so try to find one"), *(NpcUnit->GetUnitName()).ToString());
+                    ObjectiveUnit = nullptr;
+                    ABaseUnit* PossibleObjectiveUnit = nullptr;
+                    int32 PossibleObjectiveUnitDistance = -1;
 
-                    if (PossibleObjectiveUnit->GetControllerOwner() != ControllerOwnerName && PossibleObjectiveUnit->IsAlive() && GameState->GetTerrain()->CheckAvailableTile(PossibleObjectiveUnit->GetActorLocation()))
+                    for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
                     {
-                        int32 TileCost = GameState->GetTerrain()->GetTileCost(PossibleObjectiveUnit->GetActorLocation());
-                        if (PossibleObjectiveUnitDistance < 0 || TileCost < PossibleObjectiveUnitDistance)
+                        PossibleObjectiveUnit = GameState->GetUnitByIndex(i);
+
+                        if (PossibleObjectiveUnit->GetControllerOwner() != ControllerOwnerName && PossibleObjectiveUnit->IsAlive() && GameState->GetTerrain()->CheckAvailableTile(PossibleObjectiveUnit->GetActorLocation()))
                         {
-                            PossibleObjectiveUnitDistance = TileCost;
-                            ObjectiveUnit = PossibleObjectiveUnit;
+                            int32 TileCost = GameState->GetTerrain()->GetTileCost(PossibleObjectiveUnit->GetActorLocation());
+                            if (PossibleObjectiveUnitDistance < 0 || TileCost < PossibleObjectiveUnitDistance)
+                            {
+                                PossibleObjectiveUnitDistance = TileCost;
+                                ObjectiveUnit = PossibleObjectiveUnit;
+                            }
                         }
+                    }
+
+                    if (ObjectiveUnit)
+                        UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s found a valid Objective with name %s"), *(NpcUnit->GetUnitName()).ToString(), *(ObjectiveUnit->GetUnitName()).ToString());
+
+                    NpcUnit->SetCurrentObjective(ObjectiveUnit);
+                }
+
+                // Now, only if a valid objective was found, try to use the attack. The trying of using it could fail if the Unit hasn't energy enough
+                if (ObjectiveUnit)
+                {
+                    UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s tries to use an action"), *(NpcUnit->GetUnitName()).ToString());
+                    if (NpcUnit->TryUsingCurrentAction(ObjectiveUnit))
+                    {
+                        UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s used an action"), *(NpcUnit->GetUnitName()).ToString());
+                        bAllNpcAreSleeping = false;
+                        break;
+                    }
+                    else
+                    {
+                        UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s failed using an action"), *(NpcUnit->GetUnitName()).ToString());
                     }
                 }
 
-                if (ObjectiveUnit)
-                    UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s found a valid Objective with name %s"), *(NpcUnit->GetUnitName()).ToString(), *(ObjectiveUnit->GetUnitName()).ToString());
+                //TODO deberia ver el tema del movimiento
+                // There aren't any enemy in range to attack, so set the unit in movement mode and try to find a new unit to move nearby to attack later
+                //NpcUnit->SetUnitState(EUnitState::ReadyToMove);
+                //GameState->GetTerrain()->SetAvailableTiles(NpcUnit, false);
+                //NearestUnitDistance = -1;
 
-                NpcUnit->SetCurrentObjective(ObjectiveUnit);
+                // If we get until here without doing anything the unit can't do anything more and just end its actions this turn
+                UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s couldn't make anything, it is going to sleep"), *(NpcUnit->GetUnitName()).ToString());
+                NpcUnit->SetUnitState(EUnitState::Idle);
+                NpcUnit->SetAiState(EAiState::Sleeping);
+                GameState->GetTerrain()->CleanAvailableTiles();
             }
-
-            // Now, only if a valid objective was found, try to use the attack. The trying of using it could fail if the Unit hasn't energy enough
-            if (ObjectiveUnit)
-            {
-                UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s tries to use an action"), *(NpcUnit->GetUnitName()).ToString());
-                if (NpcUnit->TryUsingCurrentAction(ObjectiveUnit))
-                {
-                    UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s used an action"), *(NpcUnit->GetUnitName()).ToString());
-                    bAllNpcAreSleeping = false;
-                    break;
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s failed using an action"), *(NpcUnit->GetUnitName()).ToString());
-                }
-            }
-
-            //TODO deberia ver el tema del movimiento
-            // There aren't any enemy in range to attack, so set the unit in movement mode and try to find a new unit to move nearby to attack later
-            //NpcUnit->SetUnitState(EUnitState::ReadyToMove);
-            //GameState->GetTerrain()->SetAvailableTiles(NpcUnit, false);
-            //NearestUnitDistance = -1;
-
-            // If we get until here without doing anything the unit can't do anything more and just end its actions this turn
-            UE_LOG(LogTemp, Display, TEXT("[NPC CONTROLLER] The npc %s couldn't make anything, it is going to sleep"), *(NpcUnit->GetUnitName()).ToString());
-            NpcUnit->SetUnitState(EUnitState::Idle);
-            NpcUnit->SetAiState(EAiState::Sleeping);
-            GameState->GetTerrain()->CleanAvailableTiles();
         }
     }
 
@@ -169,9 +168,8 @@ void ANpcController::GameOver(EUnitControllerOwner WinnerController)
     bCheckForNextAction = false;
 }
 
-void ANpcController::OnUnitStops(int32 NpcUnitIndex)
+void ANpcController::OnUnitStops(int32 UnitIndex)
 {
-    //TODO en realidad lo que se recibe es el player index. Tengo que ajustar esto para usar un index mas general por sie sto tiene que actualziar el HUD
     if (bIsNpcTurn)
     {
         bCheckForNextAction = true;
@@ -179,30 +177,29 @@ void ANpcController::OnUnitStops(int32 NpcUnitIndex)
     }
 }
 
-void ANpcController::OnUnitUpdateStats(int32 NpcUnitIndex)
+void ANpcController::OnUnitUpdateStats(int32 UnitIndex)
 {
-    const ABaseUnit* Unit = NpcUnits[NpcUnitIndex];
+    ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+    ABaseUnit* Unit = GameState->GetUnitByIndex(UnitIndex);
     check(Unit);
 
     if (!(Unit->IsAlive()))
     {
         bool bAllUnitsAreDead = true;
 
-        for (const ABaseUnit* UnitToCheck : NpcUnits)
+        for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
         {
-            if (UnitToCheck->IsAlive())
+            if (ABaseUnit* UnitToCheck = GameState->GetUnitByIndex(i))
             {
-                bAllUnitsAreDead = false;
-                break;
+                if (UnitToCheck->GetControllerOwner() == ControllerOwnerName && UnitToCheck->IsAlive())
+                {
+                    bAllUnitsAreDead = false;
+                    break;
+                }
             }
         }
 
         if (bAllUnitsAreDead)
-        {
-            ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-            check(GameState);
-
             GameState->ControllerLostGame(ControllerOwnerName);
-        }
     }
 }

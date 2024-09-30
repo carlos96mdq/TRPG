@@ -125,8 +125,8 @@ enum class EUnitControllerOwner : uint8 {
 	None,
 	PlayerController1,
 	NpcController
-	
 };
+
 
 // Structs
 // Struct that defines the effects used inside the CombatActions and Pasives data tables
@@ -249,7 +249,8 @@ protected:
 	// General Data
 	bool bIsAlive = true;
 	EUnitControllerOwner ControllerOwner = EUnitControllerOwner::None;
-	int32 UnitRegistrationIndex = -1;
+	int32 UnitIndex = -1;
+	int32 UnitRegistrationIndex = -1;	//TODO deprectaed, erase
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
 	EUnitType Type = EUnitType::None;
@@ -298,7 +299,7 @@ public:
 	ABaseUnit();
 
 	// Initialize the unit with some parameters needed to get the unit data from the data tables
-	void Init(FName NewArchetype, EUnitControllerOwner NewOwner);
+	void Init(FName NewArchetype, EUnitControllerOwner NewOwner, int32 NewUnitIndex);
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -353,7 +354,8 @@ public:
 	UTexture2D* GetIcon() const { return Icon; }
 	EUnitControllerOwner GetControllerOwner() const { return ControllerOwner; }
 	bool IsAlive() const { return bIsAlive; }
-	int32 GetUnitRegistrationIndex() const { return UnitRegistrationIndex; }
+	int32 GetUnitIndex() const { return UnitIndex; }
+	int32 GetUnitRegistrationIndex() const { return UnitRegistrationIndex; }	//Deprecated
 
 	UFUNCTION(BlueprintCallable)
 	bool IsMoving() const { return CurrentState == EUnitState::Moving; }

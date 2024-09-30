@@ -25,10 +25,11 @@ ABaseUnit::ABaseUnit()
 	StatusEffects.Init(0, (int32)EStatusEffects::MAX);
 }
 
-void ABaseUnit::Init(FName NewArchetype, EUnitControllerOwner NewOwner)
+void ABaseUnit::Init(FName NewArchetype, EUnitControllerOwner NewOwner, int32 NewUnitIndex)
 {
 	Archetype = NewArchetype;
 	ControllerOwner = NewOwner;
+	UnitIndex = NewUnitIndex;
 }
 
 void ABaseUnit::BeginPlay()
@@ -90,7 +91,7 @@ void ABaseUnit::TurnStarts()
 	Armor = GetUnitStat(EUnitStats::NaturalArmor);
 	Energy = GetUnitStat(EUnitStats::MaxEnergy);
 
-	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
+	OnUnitUpdateStats.Broadcast(UnitIndex);
 }
 
 void ABaseUnit::TurnEnds()
@@ -191,8 +192,8 @@ void ABaseUnit::Move(float DeltaTime)
 		if (!QueueDestinations.Dequeue(Destination))
 		{
 			CurrentState = EUnitState::Idle;
-			OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
-			OnUnitStopsMoving.Broadcast(UnitRegistrationIndex);
+			OnUnitUpdateStats.Broadcast(UnitIndex);
+			OnUnitStopsMoving.Broadcast(UnitIndex);
 		}
 	}
 }
@@ -324,8 +325,8 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	}
 
 	CurrentState = EUnitState::Idle;
-	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
-	OnUnitStopsAction.Broadcast(UnitRegistrationIndex);
+	OnUnitUpdateStats.Broadcast(UnitIndex);
+	OnUnitStopsAction.Broadcast(UnitIndex);
 }
 
 void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
@@ -363,7 +364,7 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
 
 	// This event is called to update any visual interface that need to change the units stats
-	OnUnitUpdateStats.Broadcast(UnitRegistrationIndex);
+	OnUnitUpdateStats.Broadcast(UnitIndex);
 }
 
 void ABaseUnit::ApplyEffect(const FEffects& Effect)

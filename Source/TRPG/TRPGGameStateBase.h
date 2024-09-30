@@ -102,6 +102,8 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	// Unit whose turn is the current one
 	int32 ActiveUnitIndex = -1;
 
+	void CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, FTransform Location);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

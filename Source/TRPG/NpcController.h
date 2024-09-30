@@ -18,8 +18,6 @@ class TRPG_API ANpcController : public AActor
 	bool bCheckForNextAction = false;
 	EUnitControllerOwner ControllerOwnerName;
 
-	TArray<ANpcUnit*> NpcUnits;
-
 	void RegisterAllNpcs();
 	void NewTurnStarts(EUnitControllerOwner ControllerTurn);
 	void CheckForNextAction();
@@ -35,6 +33,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	void OnUnitStops(int32 NpcUnitIndex);
-	void OnUnitUpdateStats(int32 NpcUnitIndex);
+	void OnUnitStops(int32 UnitIndex);
+	void OnUnitUpdateStats(int32 UnitIndex);
 };

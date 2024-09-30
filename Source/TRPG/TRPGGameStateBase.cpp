@@ -42,42 +42,27 @@ void ATRPGGameStateBase::BeginPlay()
 		}
 	}
 
-	// If exist, spawn selected unit, else, spawn a default unit
-	int32 NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
-		BaseUnitClass,
-		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f))
-		)
-	);
-	UnitsArray[NewUnitIndex]->Init(SelectedUnitName, EUnitControllerOwner::PlayerController1);
-	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
-
-	// TEST: Create 2 default units
-	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
-		BaseUnitClass,
-		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
-		)
-	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Charmander"), EUnitControllerOwner::PlayerController1);
-	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f)));
-
-	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(
-		BaseUnitClass,
-		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 50.0f))
-		)
-	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Squirtle"), EUnitControllerOwner::PlayerController1);
-	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
-
-	// TEST: Create a npc
-	NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ANpcUnit>(
-		NpcUnitClass,
-		FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))
-		)
-	);
-	UnitsArray[NewUnitIndex]->Init(TEXT("Rattata"), EUnitControllerOwner::NpcController);
-	UnitsArray[NewUnitIndex]->FinishSpawning(FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f)));
+	// Create a bunch of unit just to test the map. For now, the initial unit chosed by the player plus 2 allies plus an npc are spawned
+	CreateNewUnit(SelectedUnitName, EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
+	CreateNewUnit(TEXT("Charmander"), EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f)));
+	CreateNewUnit(TEXT("Squirtle"), EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
+	CreateNewUnit(TEXT("Rattata"), EUnitControllerOwner::NpcController, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f)));
 
 	StartGame();
+}
+
+// Create a new unit, initialize it and save its reference in the UnitsArray
+void ATRPGGameStateBase::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, FTransform Location)
+{
+	int32 NewUnitIndex;
+
+	if (ControllerOwner >= EUnitControllerOwner::NpcController)
+		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(NpcUnitClass, Location));
+	else
+		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(BaseUnitClass, Location));
+
+	UnitsArray[NewUnitIndex]->Init(Archetype, ControllerOwner, NewUnitIndex);
+	UnitsArray[NewUnitIndex]->FinishSpawning(Location);
 }
 
 void ATRPGGameStateBase::StartGame()

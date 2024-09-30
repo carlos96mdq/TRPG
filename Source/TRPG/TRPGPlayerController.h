@@ -34,7 +34,6 @@ class TRPG_API ATRPGPlayerController : public APlayerController
 	// PlayerHUD widget
 	UHUDWidget* HUDWidget;
 
-	TArray<ABaseUnit*> PlayerUnits;
 	TArray<UUnitDataIcon*> UnitDataIconList;
 
 	int32 PlayerActiveUnitIndex = 0;
