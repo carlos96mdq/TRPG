@@ -9,12 +9,12 @@
 // Forward declarations
 class UActiveUnitWidget;
 class USelectedUnitWidget;
-class UTurnOrderWidget;
 class UButton;
 class UImage;
 class UVerticalBox;
 class UOverlay;
 class ABaseUnit;
+class UUnitDataIcon;
 
 /**
  * 
@@ -23,6 +23,8 @@ UCLASS()
 class TRPG_API UHUDWidget : public UUserWidget
 {
 	GENERATED_BODY()
+
+	TMap<int32, UUnitDataIcon*> UnitDataIconList;
 
 protected:
 	// Called when the game starts or when spawned
@@ -48,6 +50,8 @@ public:
 	//UButton* PlayButton;
 
 	void SetPlayerTurn(bool bIsPlayerTurn);
+	void CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass);
+	void UpdateUnitData(ABaseUnit* Unit);
 	void UpdateActiveUnitData(ABaseUnit* Unit);
 	void GameOver(bool bPlayerWon);
 };

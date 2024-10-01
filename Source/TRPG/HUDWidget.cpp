@@ -5,11 +5,14 @@
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/Overlay.h"
+#include "Components/VerticalBox.h"
+#include "Components/TextBlock.h"
 #include "TRPGGameStateBase.h"
 #include "TRPGPlayerController.h"
 #include "ActiveUnitWidget.h"
 #include "SelectedUnitWidget.h"
-#include "TurnOrderWidget.h"
+#include "UnitDataIcon.h"
+#include "BaseUnit.h"
 
 void UHUDWidget::NativeConstruct()
 {
@@ -45,12 +48,47 @@ void UHUDWidget::RestartPressed()
 void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 {
 	if (bIsPlayerTurn)
-	{
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Visible);
-	}
 	else
-	{
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass)
+{
+	int32 UnitIndex = Unit->GetUnitIndex();
+	
+	UnitDataIconList.Emplace(UnitIndex, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
+	PlayerUnits->AddChild(UnitDataIconList[UnitIndex]);
+
+	UnitDataIconList[UnitIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+	UnitDataIconList[UnitIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+	UnitDataIconList[UnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+	UnitDataIconList[UnitIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+}
+
+void UHUDWidget::UpdateUnitData(ABaseUnit* Unit)
+{
+	if (UUnitDataIcon** UnitDataIconTemp = UnitDataIconList.Find(Unit->GetUnitIndex()))
+	{
+		UUnitDataIcon* UnitDataIcon = *UnitDataIconTemp;
+		if (Unit->IsAlive())
+		{
+			UnitDataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+			UnitDataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+			UnitDataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+			UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+		}
+		else
+		{
+			// This use a placeholder just for reference. In the future a more generic method to get customizable images should be implemented
+			UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
+			if (DefeatTexture)
+				UnitDataIcon->UnitIcon->SetBrushFromTexture(DefeatTexture);
+
+			UnitDataIcon->UnitArmor->SetText(FText::AsNumber(0));
+			UnitDataIcon->UnitLife->SetText(FText::AsNumber(0));
+			UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(0));
+		}
 	}
 }
 

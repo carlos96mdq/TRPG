@@ -9,18 +9,12 @@
 #include "TRPGPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Terrain.h"
-#include "Blueprint/UserWidget.h"
-#include "ActiveUnitWidget.h"
 #include "HUDWidget.h"
-#include "Components/Image.h"
-#include "Components/TextBlock.h"
-#include "Components/VerticalBox.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "Camera/CameraActor.h" //TODO al mover a la mainCamera, mover este include con ella
-#include "UnitDataIcon.h"
 
 ATRPGPlayerController::ATRPGPlayerController()
 {
@@ -112,18 +106,10 @@ void ATRPGPlayerController::RegisterAllUnits()
     {
         if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
         {
-            // Only if the Unit is a Player's one, create the UnitDataIconWidget element, add it to the HUD in viewport and set the unit data in it
-            // Also, register the unit's index to be called later and relate it to the interface
+            // Only if the Unit is a Player's one, order the HUD to create a DataUnitIcon and register any needed delegate
             if (Unit->GetControllerOwner() == ControllerOwnerName)
             {
-                UnitDataIconList.Emplace(i, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
-                HUDWidget->PlayerUnits->AddChild(UnitDataIconList[i]);
-
-                UnitDataIconList[i]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-                UnitDataIconList[i]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-                UnitDataIconList[i]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-                UnitDataIconList[i]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
-
+                HUDWidget->CreateUnitDataWidget(Unit, UnitDataIconClass);
                 Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
                 Unit->OnUnitStopsAction.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
             }
@@ -256,30 +242,7 @@ void ATRPGPlayerController::OnUnitStops(int32 PlayerUnitIndex)
 
 void ATRPGPlayerController::OnUnitUpdateStats(ABaseUnit* Unit)
 {
-    // The Unit Index should be check because the PlayerController receives data from all unit, including ones that maybe there is not widget with data
-    if (UUnitDataIcon** UnitDataIconTemp = UnitDataIconList.Find(Unit->GetUnitIndex()))
-    {
-        UUnitDataIcon* UnitDataIcon = *UnitDataIconTemp;
-        if (Unit->IsAlive())
-        {
-            UnitDataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-            UnitDataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-            UnitDataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-            UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
-        }
-        else
-        {
-            //TODO esto es mas para probar. Despues deberia verse que objeto poner y una manera optima de cargarse, tal vez usando LoadSynchronous
-            UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
-            if (DefeatTexture)
-                UnitDataIcon->UnitIcon->SetBrushFromTexture(DefeatTexture);
-
-            //TODO deberia hacer algo mas personalizado o esteticamente correcto
-            UnitDataIcon->UnitArmor->SetText(FText::AsNumber(0));
-            UnitDataIcon->UnitLife->SetText(FText::AsNumber(0));
-            UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(0));
-        }
-    }
+    HUDWidget->UpdateUnitData(Unit);
     
     //TODO I should take into account the case where the Unit lose dies when attack (becauso of a defenders ability)
     if (Unit->GetUnitIndex() == PlayerActiveUnitIndex)

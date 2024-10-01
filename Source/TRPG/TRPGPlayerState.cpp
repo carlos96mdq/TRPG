@@ -10,6 +10,8 @@
 #include "TRPGGameStateBase.h"
 #include "TRPGPlayerController.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogPlayerState, Log, All)
+
 void ATRPGPlayerState::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -67,7 +69,7 @@ void ATRPGPlayerState::SavePlayerResults()
 	SaveGameInstance->UnitsDefeated += DataToSave.UnitsDefeated;
 	SaveGameInstance->UnitsLost += DataToSave.UnitsLost;
 
-	UE_LOG(LogTemp, Display, TEXT("[PLAYER STATE] The values of MatchesPlayed %d, MatchesWon = %d and MatchesLost = %d were saved"), SaveGameInstance->MatchesPlayed, SaveGameInstance->MatchesWon, SaveGameInstance->MatchesLost);
+	UE_LOG(LogPlayerState, Display, TEXT("The values of MatchesPlayed %d, MatchesWon = %d, MatchesLost = %d, UnitsDefeated = %d and UnitsLost = %d were saved"), SaveGameInstance->MatchesPlayed, SaveGameInstance->MatchesWon, SaveGameInstance->MatchesLost, SaveGameInstance->UnitsDefeated, SaveGameInstance->UnitsLost);
 
 	// Save the data back to the slot
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("PlayerSaveSlot"), 0);

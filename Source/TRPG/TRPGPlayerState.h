@@ -9,7 +9,6 @@
 // Forward declarations
 class ABaseUnit;
 class ATerrain;
-class APlayerStash;
 enum class EUnitState : uint8;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitSelected, ABaseUnit*)
@@ -54,9 +53,6 @@ public:
 	void AddUnitDefeatedToResults(bool PlayerIsOwner);
 	void AddMatchFinishedToResults(bool PlayerWon);
 	void SavePlayerResults();
-
-	// Player stash where saves all items that are not equipped in any unit
-	APlayerStash* PlayerStash;
 
 	// Set a reference to the terrain class created by the GameState
 	void SetTerrain(ATerrain* TerrainPointer);

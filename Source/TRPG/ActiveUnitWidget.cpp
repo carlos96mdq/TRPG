@@ -5,8 +5,6 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "TRPGPlayerController.h"
-#include "TRPGGameStateBase.h"
-#include "TRPGPlayerState.h"
 #include "BaseUnit.h"
 
 void UActiveUnitWidget::NativeConstruct()
@@ -24,10 +22,6 @@ void UActiveUnitWidget::NativeConstruct()
 	CombatButtons.Add(ButtonCombat1);
 	CombatButtons.Add(ButtonCombat2);
 	CombatButtons.Add(ButtonCombat3);
-
-	//GetWorld()->GetGameState<ATRPGGameStateBase>()->OnActiveUnitSet.AddUObject(this, &UActiveUnitWidget::SetUnitData);
-	//GetOwningPlayer<ATRPGPlayerController>()->OnActiveUnitSet.AddUObject(this, &UActiveUnitWidget::UpdateUnitData);
-	//GetOwningPlayerState<ATRPGPlayerState>()->OnStateChanged.AddUObject(this, &UActiveUnitWidget::ChangeButtonsState);
 }
 
 void UActiveUnitWidget::Combat0Pressed()

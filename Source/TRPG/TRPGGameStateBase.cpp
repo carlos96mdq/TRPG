@@ -3,7 +3,6 @@
 
 #include "TRPGGameStateBase.h"
 #include "BaseUnit.h"
-#include "NpcUnit.h"
 #include "Terrain.h"
 #include "UnitsManager.h"
 #include "NpcController.h"
