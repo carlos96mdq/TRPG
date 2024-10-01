@@ -34,7 +34,7 @@ class TRPG_API ATRPGPlayerController : public APlayerController
 	// PlayerHUD widget
 	UHUDWidget* HUDWidget;
 
-	TArray<UUnitDataIcon*> UnitDataIconList;
+	TMap<int32, UUnitDataIcon*> UnitDataIconList;
 
 	int32 PlayerActiveUnitIndex = 0;
 
@@ -73,7 +73,7 @@ public:
 	virtual void OnUnitStops(int32 PlayerUnitIndex);
 
 	// Called by the active unit when finishing with its moving process so the tiles could be paint again
-	void OnUnitUpdateStats(int32 PlayerUnitIndex);
+	void OnUnitUpdateStats(ABaseUnit* Unit);
 
 	// Called by action widget when a Combat action was selected and pressed
 	void OnCombatAction(int32 ActionPosition);
@@ -91,6 +91,8 @@ public:
 
 	// Called when players press action to zoom camera
 	void OnZoomCameraAction(const FInputActionInstance& Instance);
+
+	EUnitControllerOwner GetControllerName() const { return ControllerOwnerName; }
 
 	FOnActiveUnitSet OnActiveUnitSet;
 

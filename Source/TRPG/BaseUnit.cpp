@@ -91,7 +91,7 @@ void ABaseUnit::TurnStarts()
 	Armor = GetUnitStat(EUnitStats::NaturalArmor);
 	Energy = GetUnitStat(EUnitStats::MaxEnergy);
 
-	OnUnitUpdateStats.Broadcast(UnitIndex);
+	OnUnitUpdateStats.ExecuteIfBound(UnitIndex);
 }
 
 void ABaseUnit::TurnEnds()
@@ -192,7 +192,7 @@ void ABaseUnit::Move(float DeltaTime)
 		if (!QueueDestinations.Dequeue(Destination))
 		{
 			CurrentState = EUnitState::Idle;
-			OnUnitUpdateStats.Broadcast(UnitIndex);
+			OnUnitUpdateStats.ExecuteIfBound(UnitIndex);
 			OnUnitStopsMoving.Broadcast(UnitIndex);
 		}
 	}
@@ -325,7 +325,7 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 	}
 
 	CurrentState = EUnitState::Idle;
-	OnUnitUpdateStats.Broadcast(UnitIndex);
+	OnUnitUpdateStats.ExecuteIfBound(UnitIndex);
 	OnUnitStopsAction.Broadcast(UnitIndex);
 }
 
@@ -364,7 +364,7 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
 
 	// This event is called to update any visual interface that need to change the units stats
-	OnUnitUpdateStats.Broadcast(UnitIndex);
+	OnUnitUpdateStats.ExecuteIfBound(UnitIndex);
 }
 
 void ABaseUnit::ApplyEffect(const FEffects& Effect)
@@ -392,9 +392,6 @@ void ABaseUnit::UnitDies()
 	SetActorHiddenInGame(true);
 	SetActorEnableCollision(false);
 	SetActorTickEnabled(false);
-
-	// Let know other objects that this unit dies so all changes needed are made
-	//OnUnitDies.Broadcast(UnitRegistrationIndex);
 }
 
 void ABaseUnit::SetUnitState(EUnitState NewState)

@@ -5,6 +5,7 @@
 #include "BaseUnit.h"
 #include "NpcUnit.h"
 #include "Terrain.h"
+#include "UnitsManager.h"
 #include "NpcController.h"
 #include "TRPGPlayerState.h"
 #include "TRPGGameInstanceSubsystem.h"
@@ -19,6 +20,7 @@ void ATRPGGameStateBase::BeginPlay()
 	Super::BeginPlay();
 	
 	Terrain = GetWorld()->SpawnActor<ATerrain>();
+	UnitsManager = GetWorld()->SpawnActor<AUnitsManager>();
 	NpcController = GetWorld()->SpawnActor<ANpcController>();
 
 	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
@@ -43,76 +45,52 @@ void ATRPGGameStateBase::BeginPlay()
 	}
 
 	// Create a bunch of unit just to test the map. For now, the initial unit chosed by the player plus 2 allies plus an npc are spawned
-	CreateNewUnit(SelectedUnitName, EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f)));
-	CreateNewUnit(TEXT("Charmander"), EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f)));
-	CreateNewUnit(TEXT("Squirtle"), EUnitControllerOwner::PlayerController1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f)));
-	CreateNewUnit(TEXT("Rattata"), EUnitControllerOwner::NpcController, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f)));
-
+	const TArray<FUnitInitData> UnitsInitData = {
+		{SelectedUnitName, EUnitControllerOwner::Player1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(200.0f, 0.0f, 20.0f))},
+		{TEXT("Charmander"), EUnitControllerOwner::Player1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(1200.0f, 0.0f, 20.0f))},
+		{TEXT("Squirtle"), EUnitControllerOwner::Player1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(800.0f, 1600.0f, 20.0f))},
+		{TEXT("Rattata"), EUnitControllerOwner::AI1, FTransform(FRotator(0.0f, 0.0f, 0.0f), FVector(600.0f, 200.0f, 20.0f))},
+	};
+	UnitsManager->CreateNewUnits(UnitsInitData);
+	
 	StartGame();
-}
-
-// Create a new unit, initialize it and save its reference in the UnitsArray
-void ATRPGGameStateBase::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, FTransform Location)
-{
-	int32 NewUnitIndex;
-
-	if (ControllerOwner >= EUnitControllerOwner::NpcController)
-		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(NpcUnitClass, Location));
-	else
-		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(BaseUnitClass, Location));
-
-	UnitsArray[NewUnitIndex]->Init(Archetype, ControllerOwner, NewUnitIndex);
-	UnitsArray[NewUnitIndex]->FinishSpawning(Location);
 }
 
 void ATRPGGameStateBase::StartGame()
 {
+	// It is important to make this broadcast here so all PlayerController can be set its UnitData before being called by the UnitsManager
+	OnGameStarts.Broadcast();
+
 	// Init random seed
 	FMath::RandInit(FDateTime::Now().GetTicks());
 
 	// The function TurnStarts is called in all units so their initial stats like armor can be set
-	for (ABaseUnit* Unit : UnitsArray)
-		Unit->TurnStarts();
+	UnitsManager->UnitsStartTurn(EUnitControllerOwner::None);
 
 	// And the game always starts with the player turn
-	ControllerTurn = EUnitControllerOwner::PlayerController1;
-
-	OnGameStarts.Broadcast();
+	ControllerTurn = EUnitControllerOwner::Player1;
+	
 	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from StartGame()"));
 	OnNewTurnStarts.Broadcast(ControllerTurn);
 }
 
 void ATRPGGameStateBase::SetNextTurn()
 {
-	for (ABaseUnit* Unit : UnitsArray)
-	{
-		check(Unit);
-		if (Unit->GetControllerOwner() == ControllerTurn && Unit->IsAlive())
-		{
-			Unit->TurnEnds();
-		}
-	}
+	UnitsManager->UnitsEndTurn(ControllerTurn);
 
 	// Set the next Player. In this case, the turn rotates between the player and the NpcController.
-	if (ControllerTurn == EUnitControllerOwner::PlayerController1)
+	if (ControllerTurn == EUnitControllerOwner::Player1)
 	{
 		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The AI's turn starts"));
-		ControllerTurn = EUnitControllerOwner::NpcController;
+		ControllerTurn = EUnitControllerOwner::AI1;
 	}
 	else
 	{
 		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The Player's turn starts"));
-		ControllerTurn = EUnitControllerOwner::PlayerController1;
+		ControllerTurn = EUnitControllerOwner::Player1;
 	}
 		
-	for (ABaseUnit* Unit : UnitsArray)
-	{
-		check(Unit);
-		if (Unit->GetControllerOwner() == ControllerTurn && Unit->IsAlive())
-		{
-			Unit->TurnStarts();
-		}
-	}
+	UnitsManager->UnitsStartTurn(ControllerTurn);
 	
 	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from SetNextTurn()"));
 	OnNewTurnStarts.Broadcast(ControllerTurn);
@@ -120,39 +98,36 @@ void ATRPGGameStateBase::SetNextTurn()
 
 void ATRPGGameStateBase::ControllerLostGame(EUnitControllerOwner ControllerOwner)
 {
-	//TODO For now the system is going to be implemented so always there is a PlayerController and a NpcController. In the future it could be scaled to multiple players
+	// System implemented for a one player game
 	EUnitControllerOwner WinnerController = EUnitControllerOwner::None;
 
-	if (ControllerOwner == EUnitControllerOwner::NpcController)
+	if (ControllerOwner == EUnitControllerOwner::AI1)
 	{
 		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Won"));
-		WinnerController = EUnitControllerOwner::PlayerController1;
+		WinnerController = EUnitControllerOwner::Player1;
 	}
-	else if(ControllerOwner == EUnitControllerOwner::PlayerController1)
+	else if(ControllerOwner == EUnitControllerOwner::Player1)
 	{
 		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Lost"));
-		WinnerController = EUnitControllerOwner::NpcController;
+		WinnerController = EUnitControllerOwner::AI1;
 	}
 
 	OnGameOver.Broadcast(WinnerController);
 }
 
-TArray<FVector> ATRPGGameStateBase::GetAllUnitLocations()
-{
-	TArray<FVector> Locations;
-
-	for (ABaseUnit* Unit : UnitsArray)
-		Locations.Emplace(Unit->GetActorLocation());
-
-	return Locations;
+TArray<FVector> ATRPGGameStateBase::GetAllUnitLocations() const
+{ 
+	return UnitsManager->GetAllUnitLocations();
 }
 
-ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index)
+ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index) const
+{ 
+	return UnitsManager->GetUnitByIndex(Index);
+}
+
+int32 ATRPGGameStateBase::GetUnitsQuantity() const
 {
-	if (Index >= 0 && Index < UnitsArray.Num())
-		return UnitsArray[Index];
-	else
-		return nullptr;
+	return UnitsManager->GetUnitsQuantity();
 }
 
 float ATRPGGameStateBase::GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const

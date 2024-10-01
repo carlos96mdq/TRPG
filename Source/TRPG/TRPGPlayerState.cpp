@@ -8,6 +8,7 @@
 #include "MySaveGame.h"
 #include "Kismet/GameplayStatics.h"
 #include "TRPGGameStateBase.h"
+#include "TRPGPlayerController.h"
 
 void ATRPGPlayerState::PostInitializeComponents()
 {
@@ -19,6 +20,25 @@ void ATRPGPlayerState::PostInitializeComponents()
 void ATRPGPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ATRPGPlayerState::OnUnitUpdateStats(ABaseUnit* Unit)
+{
+	if (ATRPGPlayerController* MyPlayerController = Cast<ATRPGPlayerController>(GetPlayerController()))
+	{
+		if (!Unit->IsAlive())
+			AddUnitDefeatedToResults(Unit->GetControllerOwner() == MyPlayerController->GetControllerName());
+		
+		MyPlayerController->OnUnitUpdateStats(Unit);
+	}
+}
+
+void ATRPGPlayerState::AddUnitDefeatedToResults(bool PlayerIsOwner)
+{
+	if (PlayerIsOwner)
+		DataToSave.UnitsLost++;
+	else
+		DataToSave.UnitsDefeated++;
 }
 
 void ATRPGPlayerState::AddMatchFinishedToResults(bool PlayerWon)

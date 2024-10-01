@@ -29,7 +29,7 @@ ATRPGPlayerController::ATRPGPlayerController()
     bEnableMouseOverEvents = true;
 
     // By default set this as the PlayerController. In the future, multiples Players could exist so each PlayerController should be set with its own enum id
-    ControllerOwnerName = EUnitControllerOwner::PlayerController1;
+    ControllerOwnerName = EUnitControllerOwner::Player1;
 
     // Spawn this here, so the camera appears in the editor level so it can be positioned there
     /*MainCamera = GetWorld()->SpawnActor<ACameraActor>();*/
@@ -107,33 +107,26 @@ void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
 void ATRPGPlayerController::RegisterAllUnits()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    int32 UnitRegistrationIndex = 0;
 
     for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
     {
-        ABaseUnit* Unit = GameState->GetUnitByIndex(i);
-        check(Unit);
-
-        // Only if the Unit is a Player's one, create the UnitDataIconWidget element, add it to the HUD in viewport and set the unit data in it
-        // Also, register the unit's index to be called later and relate it to the interface
-        if (Unit->GetControllerOwner() == ControllerOwnerName)
+        if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
         {
-            Unit->SetUnitRegistrationIndex(UnitRegistrationIndex);
+            // Only if the Unit is a Player's one, create the UnitDataIconWidget element, add it to the HUD in viewport and set the unit data in it
+            // Also, register the unit's index to be called later and relate it to the interface
+            if (Unit->GetControllerOwner() == ControllerOwnerName)
+            {
+                UnitDataIconList.Emplace(i, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
+                HUDWidget->PlayerUnits->AddChild(UnitDataIconList[i]);
 
-            UnitDataIconList.Emplace(CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
-            check(UnitDataIconList[UnitRegistrationIndex]);
-            HUDWidget->PlayerUnits->AddChild(UnitDataIconList[UnitRegistrationIndex]);
+                UnitDataIconList[i]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+                UnitDataIconList[i]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+                UnitDataIconList[i]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+                UnitDataIconList[i]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
 
-            UnitDataIconList[UnitRegistrationIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-            UnitDataIconList[UnitRegistrationIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-            UnitDataIconList[UnitRegistrationIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-            UnitDataIconList[UnitRegistrationIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
-
-            Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
-            Unit->OnUnitStopsAction.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
-            Unit->OnUnitUpdateStats.AddUObject(this, &ATRPGPlayerController::OnUnitUpdateStats);
-
-            UnitRegistrationIndex++;
+                Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
+                Unit->OnUnitStopsAction.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
+            }
         }
     }
 }
@@ -197,7 +190,7 @@ void ATRPGPlayerController::OnMouseLeftClicked()
     {
         if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
         {
-            if (HitUnit->GetControllerOwner() == ControllerOwnerName && HitUnit->GetUnitRegistrationIndex() != PlayerActiveUnitIndex)
+            if (HitUnit->GetControllerOwner() == ControllerOwnerName && HitUnit->GetUnitIndex() != PlayerActiveUnitIndex)
                 SetActiveUnit(HitUnit);
         }
     }
@@ -261,54 +254,35 @@ void ATRPGPlayerController::OnUnitStops(int32 PlayerUnitIndex)
     }
 }
 
-void ATRPGPlayerController::OnUnitUpdateStats(int32 UnitIndex)
+void ATRPGPlayerController::OnUnitUpdateStats(ABaseUnit* Unit)
 {
-    ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* Unit = GameState->GetUnitByIndex(UnitIndex);
-    check(Unit);
-
-    if (Unit->IsAlive())
+    // The Unit Index should be check because the PlayerController receives data from all unit, including ones that maybe there is not widget with data
+    if (UUnitDataIcon** UnitDataIconTemp = UnitDataIconList.Find(Unit->GetUnitIndex()))
     {
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
-    }
-    else
-    {
-        //TODO esto es mas para probar. Despues deberia verse que objeto poner y una manera optima de cargarse, tal vez usando LoadSynchronous
-        UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
-        if (DefeatTexture)
-            UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitIcon->SetBrushFromTexture(DefeatTexture);
-
-        //TODO deberia hacer algo mas personalizado o esteticamente correcto
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitArmor->SetText(FText::AsNumber(0));
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitLife->SetText(FText::AsNumber(0));
-        UnitDataIconList[Unit->GetUnitRegistrationIndex()]->UnitEnergy->SetText(FText::AsNumber(0));
-
-        // PlayerController needs to check if there is at least an alive PlayerUnit, otherwise the PlayerController lost the game
-        bool bAllPlayersAreDead = true;
-        
-        for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+        UUnitDataIcon* UnitDataIcon = *UnitDataIconTemp;
+        if (Unit->IsAlive())
         {
-            if (ABaseUnit* UnitToCheck = GameState->GetUnitByIndex(i))
-            {
-                if (UnitToCheck->GetControllerOwner() == ControllerOwnerName && UnitToCheck->IsAlive())
-                {
-                    bAllPlayersAreDead = false;
-                    break;
-                }
-            }
+            UnitDataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+            UnitDataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+            UnitDataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+            UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
         }
-
-        if (bAllPlayersAreDead)
+        else
         {
-            GameState->ControllerLostGame(ControllerOwnerName);
+            //TODO esto es mas para probar. Despues deberia verse que objeto poner y una manera optima de cargarse, tal vez usando LoadSynchronous
+            UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
+            if (DefeatTexture)
+                UnitDataIcon->UnitIcon->SetBrushFromTexture(DefeatTexture);
+
+            //TODO deberia hacer algo mas personalizado o esteticamente correcto
+            UnitDataIcon->UnitArmor->SetText(FText::AsNumber(0));
+            UnitDataIcon->UnitLife->SetText(FText::AsNumber(0));
+            UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(0));
         }
     }
-
-    //TODO despues deberia ver algo con el tema de si justo muere la active unit (seria como un daño rebote)
-    if (UnitIndex == PlayerActiveUnitIndex)
+    
+    //TODO I should take into account the case where the Unit lose dies when attack (becauso of a defenders ability)
+    if (Unit->GetUnitIndex() == PlayerActiveUnitIndex)
         HUDWidget->UpdateActiveUnitData(Unit);
 }
 

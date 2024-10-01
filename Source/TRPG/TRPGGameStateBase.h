@@ -12,6 +12,7 @@ class ABaseTile;
 class ABaseUnit;
 class ANpcUnit;
 class ATerrain;
+class AUnitsManager;
 class ANpcController;
 enum class EUnitControllerOwner : uint8;
 
@@ -64,45 +65,54 @@ public:
 	float Water = 1;
 };
 
+struct FUnitInitData
+{
+public:
+	FName Archetype;
+	EUnitControllerOwner ControllerOwner;
+	FTransform Location;
+
+	FUnitInitData(FName NewArchetype, EUnitControllerOwner NewControllerOwner, FTransform NewLocation)
+		: Archetype(NewArchetype), ControllerOwner(NewControllerOwner), Location(NewLocation) {}
+};
+
 /**
- * 
+ *
  */
 UCLASS()
 class TRPG_API ATRPGGameStateBase : public AGameStateBase
 {
 	GENERATED_BODY()
-	
-	// Base Tile class used to generate map
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<ABaseTile> BaseTileClass;
-	
+
+		// Base Tile class used to generate map
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
+		TSubclassOf<ABaseTile> BaseTileClass;
+
 	// Wall Tile class used to generate map
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<ABaseTile> WallTileClass;
+		TSubclassOf<ABaseTile> WallTileClass;
 
 	// Unit classes used to spawn units in world
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<ABaseUnit> BaseUnitClass;
+		TSubclassOf<ABaseUnit> BaseUnitClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<ANpcUnit> NpcUnitClass;
+		TSubclassOf<ANpcUnit> NpcUnitClass;
 
 	TArray<TArray<float>> DamageTypeModifiers;
 
 	// Class Terrain that manage the map data
 	ATerrain* Terrain;
 
+	// Class that manages the units
+	AUnitsManager* UnitsManager;
+
 	// Class that controlles the actions and movements of all npcs in map
 	ANpcController* NpcController;
-	
-	EUnitControllerOwner ControllerTurn;
 
-	// Array of units that are in the current map
-	TArray<ABaseUnit*> UnitsArray;
+	EUnitControllerOwner ControllerTurn;
 
 	// Unit whose turn is the current one
 	int32 ActiveUnitIndex = -1;
-
-	void CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, FTransform Location);
 
 protected:
 	// Called when the game starts or when spawned
@@ -120,7 +130,7 @@ public:
 	void ControllerLostGame(EUnitControllerOwner ControllerOwner);
 
 	// Fill a reference TArray with the current location of all units
-	TArray<FVector> GetAllUnitLocations();
+	TArray<FVector> GetAllUnitLocations() const;
 
 	FOnGameStarts OnGameStarts;
 	FOnNewTurnStarts OnNewTurnStarts;
@@ -129,8 +139,10 @@ public:
 
 	const TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
 	const TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
+	const TSubclassOf<ABaseUnit> GetBaseUnitClass() const { return BaseUnitClass; };
+	const TSubclassOf<ANpcUnit> GetNpcUnitClass() const { return NpcUnitClass; };
 	ATerrain* GetTerrain() const { return Terrain; };
-	ABaseUnit* GetUnitByIndex(int32 Index);
-	int32 GetUnitsQuantity() const { return UnitsArray.Num(); };
+	ABaseUnit* GetUnitByIndex(int32 Index) const;
+	int32 GetUnitsQuantity() const;
 	float GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const;
 };

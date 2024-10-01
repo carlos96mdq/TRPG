@@ -7,10 +7,9 @@
 #include "Engine/DataTable.h"
 #include "BaseUnit.generated.h"
 
+DECLARE_DELEGATE_OneParam(FOnUnitUpdateStats, int32)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsMoving, int32)
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitStopsAction, int32)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitUpdateStats, int32)
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitDies, int32)
 
 // Enums
 UENUM()
@@ -123,8 +122,8 @@ enum class EObjectiveType : uint8 {
 UENUM()
 enum class EUnitControllerOwner : uint8 {
 	None,
-	PlayerController1,
-	NpcController
+	Player1,
+	AI1
 };
 
 
@@ -250,7 +249,6 @@ protected:
 	bool bIsAlive = true;
 	EUnitControllerOwner ControllerOwner = EUnitControllerOwner::None;
 	int32 UnitIndex = -1;
-	int32 UnitRegistrationIndex = -1;	//TODO deprectaed, erase
 	FName Name = TEXT("None");
 	FName Archetype = TEXT("None");
 	EUnitType Type = EUnitType::None;
@@ -307,7 +305,6 @@ public:
 	FOnUnitStopsMoving OnUnitStopsMoving;
 	FOnUnitStopsAction OnUnitStopsAction;
 	FOnUnitUpdateStats OnUnitUpdateStats;
-	FOnUnitDies OnUnitDies;
 
 	// Called when this unit turn starts
 	virtual void TurnStarts();
@@ -337,8 +334,6 @@ public:
 	// Set the Unit State and send a message to all object that need to know about it
 	void SetUnitState(EUnitState NewState);
 
-	void SetUnitRegistrationIndex(int32 NewIdx) { UnitRegistrationIndex = NewIdx; }
-
 	bool HasActionEquipped(int32 CombatActionIndex) const;
 
 	EUnitState GetUnitState() const { return CurrentState; }
@@ -355,7 +350,6 @@ public:
 	EUnitControllerOwner GetControllerOwner() const { return ControllerOwner; }
 	bool IsAlive() const { return bIsAlive; }
 	int32 GetUnitIndex() const { return UnitIndex; }
-	int32 GetUnitRegistrationIndex() const { return UnitRegistrationIndex; }	//Deprecated
 
 	UFUNCTION(BlueprintCallable)
 	bool IsMoving() const { return CurrentState == EUnitState::Moving; }

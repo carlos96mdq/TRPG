@@ -49,6 +49,9 @@ protected:
 
 public:
 
+	void OnUnitUpdateStats(ABaseUnit* Unit);
+
+	void AddUnitDefeatedToResults(bool PlayerIsOwner);
 	void AddMatchFinishedToResults(bool PlayerWon);
 	void SavePlayerResults();
 

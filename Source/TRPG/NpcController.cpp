@@ -10,7 +10,7 @@ DEFINE_LOG_CATEGORY_STATIC(LogNpcController, Log, All)
 ANpcController::ANpcController()
 {
     // By default set this as the NpcController. In the future, multiples Npc could exist so each NpcController should be set with its own enum id
-    ControllerOwnerName = EUnitControllerOwner::NpcController;
+    ControllerOwnerName = EUnitControllerOwner::AI1;
     PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -42,8 +42,6 @@ void ANpcController::Tick(float DeltaTime)
 void ANpcController::RegisterAllNpcs()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    check(GameState);
-    int32 UnitIndex = 0;
 
     for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
     {
@@ -51,13 +49,7 @@ void ANpcController::RegisterAllNpcs()
         
         // Register all the units that are npcs to keep a pointer to them and iterate that array when needed
         if (Unit != nullptr && Unit->GetControllerOwner() == ControllerOwnerName)
-        {
-            Unit->SetUnitRegistrationIndex(UnitIndex);
             Unit->OnUnitStopsAction.AddUObject(this, &ANpcController::OnUnitStops);
-            Unit->OnUnitUpdateStats.AddUObject(this, &ANpcController::OnUnitUpdateStats);
-
-            UnitIndex++;
-        }
     }
 }
 
