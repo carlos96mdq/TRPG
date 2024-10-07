@@ -106,10 +106,11 @@ void ATRPGPlayerController::RegisterAllUnits()
     {
         if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
         {
-            // Only if the Unit is a Player's one, order the HUD to create a DataUnitIcon and register any needed delegate
-            if (Unit->GetControllerOwner() == ControllerOwnerName)
+            bool IsPlayerUnit = Unit->GetControllerOwner() == ControllerOwnerName;
+            HUDWidget->CreateUnitDataWidget(Unit, UnitDataIconClass, IsPlayerUnit);
+
+            if (IsPlayerUnit)
             {
-                HUDWidget->CreateUnitDataWidget(Unit, UnitDataIconClass);
                 Unit->OnUnitStopsMoving.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
                 Unit->OnUnitStopsAction.AddUObject(this, &ATRPGPlayerController::OnUnitStops);
             }

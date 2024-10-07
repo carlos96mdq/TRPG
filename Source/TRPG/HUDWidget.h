@@ -25,6 +25,7 @@ class TRPG_API UHUDWidget : public UUserWidget
 	GENERATED_BODY()
 
 	TMap<int32, UUnitDataIcon*> UnitDataIconList;
+	TMap<int32, UUnitDataIcon*> EnemyDataIconList;
 
 protected:
 	// Called when the game starts or when spawned
@@ -41,6 +42,9 @@ public:
 	UVerticalBox* PlayerUnits;
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
+	UVerticalBox* EnemyUnits;
+
+	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UOverlay* GameOverScreen;
 
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
@@ -50,7 +54,7 @@ public:
 	//UButton* PlayButton;
 
 	void SetPlayerTurn(bool bIsPlayerTurn);
-	void CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass);
+	void CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool IsThisPlayer);
 	void UpdateUnitData(ABaseUnit* Unit);
 	void UpdateActiveUnitData(ABaseUnit* Unit);
 	void GameOver(bool bPlayerWon);

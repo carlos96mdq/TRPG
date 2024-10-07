@@ -53,24 +53,32 @@ void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass)
+void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool IsThisPlayer)
 {
 	int32 UnitIndex = Unit->GetUnitIndex();
 	
-	UnitDataIconList.Emplace(UnitIndex, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
-	PlayerUnits->AddChild(UnitDataIconList[UnitIndex]);
+	TMap<int32, UUnitDataIcon*>& DataIconList = IsThisPlayer ? UnitDataIconList : EnemyDataIconList;
 
-	UnitDataIconList[UnitIndex]->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-	UnitDataIconList[UnitIndex]->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-	UnitDataIconList[UnitIndex]->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-	UnitDataIconList[UnitIndex]->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+	UUnitDataIcon* DataIcon = DataIconList.Emplace(UnitIndex, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
+	
+	if (IsThisPlayer)
+		PlayerUnits->AddChild(DataIcon);
+	else
+		EnemyUnits->AddChild(DataIcon);
+
+	DataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
+	DataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
+	DataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
+	DataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
 }
 
 void UHUDWidget::UpdateUnitData(ABaseUnit* Unit)
 {
-	if (UUnitDataIcon** UnitDataIconTemp = UnitDataIconList.Find(Unit->GetUnitIndex()))
+	UUnitDataIcon** UnitDataIconTemp = UnitDataIconList.Contains(Unit->GetUnitIndex()) ? UnitDataIconList.Find(Unit->GetUnitIndex()) : EnemyDataIconList.Find(Unit->GetUnitIndex());
+	UUnitDataIcon* UnitDataIcon = *UnitDataIconTemp;
+
+	if (UnitDataIcon)
 	{
-		UUnitDataIcon* UnitDataIcon = *UnitDataIconTemp;
 		if (Unit->IsAlive())
 		{
 			UnitDataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
