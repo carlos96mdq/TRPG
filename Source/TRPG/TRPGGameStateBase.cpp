@@ -124,9 +124,9 @@ ABaseUnit* ATRPGGameStateBase::GetUnitByIndex(int32 Index) const
 	return UnitsManager->GetUnitByIndex(Index);
 }
 
-int32 ATRPGGameStateBase::GetUnitsQuantity() const
+int32 ATRPGGameStateBase::GetUnitsNum() const
 {
-	return UnitsManager->GetUnitsQuantity();
+	return UnitsManager->GetUnitsNum();
 }
 
 float ATRPGGameStateBase::GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const

@@ -4,6 +4,7 @@
 #include "BaseUnit.h"
 #include "TRPGGameStateBase.h"
 #include "Animation/AnimInstance.h"
+#include UE_INLINE_GENERATED_CPP_BY_NAME(BaseUnit)
 
 ABaseUnit::ABaseUnit()
 {

@@ -53,23 +53,20 @@ void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
 }
 
-void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool IsThisPlayer)
+void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool bBelongsToPlayer)
 {
 	int32 UnitIndex = Unit->GetUnitIndex();
 	
-	TMap<int32, UUnitDataIcon*>& DataIconList = IsThisPlayer ? UnitDataIconList : EnemyDataIconList;
+	TMap<int32, UUnitDataIcon*>& DataIconList = bBelongsToPlayer ? UnitDataIconList : EnemyDataIconList;
 
 	UUnitDataIcon* DataIcon = DataIconList.Emplace(UnitIndex, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
 	
-	if (IsThisPlayer)
+	if (bBelongsToPlayer)
 		PlayerUnits->AddChild(DataIcon);
 	else
 		EnemyUnits->AddChild(DataIcon);
 
-	DataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-	DataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-	DataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-	DataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+	DataIcon->SetData(FUnitDataParams(Unit->GetIcon(), Unit->GetArmor(), Unit->GetLife(), Unit->GetEnergy()));
 }
 
 void UHUDWidget::UpdateUnitData(ABaseUnit* Unit)
@@ -81,21 +78,14 @@ void UHUDWidget::UpdateUnitData(ABaseUnit* Unit)
 	{
 		if (Unit->IsAlive())
 		{
-			UnitDataIcon->UnitIcon->SetBrushFromTexture(Unit->GetIcon());
-			UnitDataIcon->UnitArmor->SetText(FText::AsNumber(Unit->GetArmor()));
-			UnitDataIcon->UnitLife->SetText(FText::AsNumber(Unit->GetLife()));
-			UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(Unit->GetEnergy()));
+			UnitDataIcon->SetData(FUnitDataParams(Unit->GetIcon(), Unit->GetArmor(), Unit->GetLife(), Unit->GetEnergy()));
 		}
 		else
 		{
 			// This use a placeholder just for reference. In the future a more generic method to get customizable images should be implemented
 			UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
 			if (DefeatTexture)
-				UnitDataIcon->UnitIcon->SetBrushFromTexture(DefeatTexture);
-
-			UnitDataIcon->UnitArmor->SetText(FText::AsNumber(0));
-			UnitDataIcon->UnitLife->SetText(FText::AsNumber(0));
-			UnitDataIcon->UnitEnergy->SetText(FText::AsNumber(0));
+				UnitDataIcon->SetData(FUnitDataParams(DefeatTexture, 0, 0, 0));
 		}
 	}
 }

@@ -102,7 +102,7 @@ void ATRPGPlayerController::RegisterAllUnits()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
 
-    for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+    for (int32 i = 0; i < GameState->GetUnitsNum(); i++)
     {
         if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
         {
@@ -129,7 +129,7 @@ void ATRPGPlayerController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
 
     if (ControllerTurn == ControllerOwnerName)
     {
-        for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+        for (int32 i = 0; i < GameState->GetUnitsNum(); i++)
         {
             if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
             {

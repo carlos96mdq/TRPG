@@ -70,10 +70,10 @@ struct FUnitInitData
 public:
 	FName Archetype;
 	EUnitControllerOwner ControllerOwner;
-	FTransform Location;
+	FTransform Transform;
 
-	FUnitInitData(FName NewArchetype, EUnitControllerOwner NewControllerOwner, FTransform NewLocation)
-		: Archetype(NewArchetype), ControllerOwner(NewControllerOwner), Location(NewLocation) {}
+	FUnitInitData(FName NewArchetype, EUnitControllerOwner NewControllerOwner, const FTransform& NewTransform)
+		: Archetype(NewArchetype), ControllerOwner(NewControllerOwner), Transform(NewTransform) {}
 };
 
 /**
@@ -84,30 +84,28 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 {
 	GENERATED_BODY()
 
-		// Base Tile class used to generate map
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<ABaseTile> BaseTileClass;
-
-	// Wall Tile class used to generate map
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<ABaseTile> WallTileClass;
+	// Tile class used to generate map
+	UPROPERTY(EditAnywhere, Category = OwnAttributes)
+	TSubclassOf<ABaseTile> BaseTileClass;
+	UPROPERTY(EditAnywhere, Category = OwnAttributes)
+	TSubclassOf<ABaseTile> WallTileClass;
 
 	// Unit classes used to spawn units in world
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<ABaseUnit> BaseUnitClass;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = OwnAttributes, meta = (AllowPrivateAccess = "true"))
-		TSubclassOf<ANpcUnit> NpcUnitClass;
+	UPROPERTY(EditAnywhere, Category = OwnAttributes)
+	TSubclassOf<ABaseUnit> BaseUnitClass;
+	UPROPERTY(EditAnywhere, Category = OwnAttributes)
+	TSubclassOf<ANpcUnit> NpcUnitClass;
 
 	TArray<TArray<float>> DamageTypeModifiers;
 
 	// Class Terrain that manage the map data
-	ATerrain* Terrain;
+	TObjectPtr<ATerrain> Terrain;
 
 	// Class that manages the units
-	AUnitsManager* UnitsManager;
+	TObjectPtr<AUnitsManager> UnitsManager;
 
 	// Class that controlles the actions and movements of all npcs in map
-	ANpcController* NpcController;
+	TObjectPtr<ANpcController> NpcController;
 
 	EUnitControllerOwner ControllerTurn;
 
@@ -137,12 +135,12 @@ public:
 	FOnActiveUnitSet OnActiveUnitSet;
 	FOnGameOver OnGameOver;
 
-	const TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
-	const TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
-	const TSubclassOf<ABaseUnit> GetBaseUnitClass() const { return BaseUnitClass; };
-	const TSubclassOf<ANpcUnit> GetNpcUnitClass() const { return NpcUnitClass; };
+	TSubclassOf<ABaseTile> GetBaseTileClass() const { return BaseTileClass; };
+	TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
+	TSubclassOf<ABaseUnit> GetBaseUnitClass() const { return BaseUnitClass; };
+	TSubclassOf<ANpcUnit> GetNpcUnitClass() const { return NpcUnitClass; };
 	ATerrain* GetTerrain() const { return Terrain; };
 	ABaseUnit* GetUnitByIndex(int32 Index) const;
-	int32 GetUnitsQuantity() const;
+	int32 GetUnitsNum() const;
 	float GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const;
 };

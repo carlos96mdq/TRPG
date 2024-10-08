@@ -9,53 +9,31 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogUnitsManager, Log, All)
 
-// Sets default values
-AUnitsManager::AUnitsManager()
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;	//TODO if is not necesary, erase
-
-}
-
-// Called when the game starts or when spawned
-void AUnitsManager::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AUnitsManager::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AUnitsManager::CreateNewUnits(const TArray<FUnitInitData>& UnitsData)
 {
     for (const FUnitInitData& UnitData : UnitsData)
     {
-        CreateNewUnit(UnitData.Archetype, UnitData.ControllerOwner, UnitData.Location);
+        CreateNewUnit(UnitData.Archetype, UnitData.ControllerOwner, UnitData.Transform);
     }
 }
 
-void AUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, FTransform Location)
+void AUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, const FTransform& Transform)
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
 	int32 NewUnitIndex;
 
 	// Create and save the unit
 	if (ControllerOwner >= EUnitControllerOwner::AI1)
-		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(GameState->GetNpcUnitClass(), Location));
+		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(GameState->GetNpcUnitClass(), Transform));
 	else
-		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(GameState->GetBaseUnitClass(), Location));
+		NewUnitIndex = UnitsArray.Emplace(GetWorld()->SpawnActorDeferred<ABaseUnit>(GameState->GetBaseUnitClass(), Transform));
 
 	UnitsArray[NewUnitIndex]->Init(Archetype, ControllerOwner, NewUnitIndex);
-	UnitsArray[NewUnitIndex]->FinishSpawning(Location);
+	UnitsArray[NewUnitIndex]->FinishSpawning(Transform);
 
 	// Bind all the units delegate to this actor
-	//TODO because this is the online actor that shouyld be bind to those delegates, convert them from multicast to onecast
-	//TODO maybe I should change all the array access [] UnitsArray[NewUnitIndex] for an unique acces and a pointer
+	//TODO because this is the online actor that should be bind to those delegates, convert them from multicast to onecast
+	//TODO maybe I should change all the array access [] UnitsArray[NewUnitIndex] for an unique access and a pointer
 	UnitsArray[NewUnitIndex]->OnUnitStopsMoving.AddUObject(this, &AUnitsManager::OnUnitStops);
 	UnitsArray[NewUnitIndex]->OnUnitStopsAction.AddUObject(this, &AUnitsManager::OnUnitStops);
 	UnitsArray[NewUnitIndex]->OnUnitUpdateStats.BindUObject(this, &AUnitsManager::OnUnitUpdateStats);
@@ -153,7 +131,7 @@ ABaseUnit* AUnitsManager::GetUnitByIndex(int32 Index)
         return nullptr;
 }
 
-int32 AUnitsManager::GetUnitsQuantity() const
+int32 AUnitsManager::GetUnitsNum() const
 {
     return UnitsArray.Num();
 }

@@ -43,7 +43,7 @@ void ANpcController::RegisterAllNpcs()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
 
-    for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+    for (int32 i = 0; i < GameState->GetUnitsNum(); i++)
     {
         ANpcUnit* Unit = Cast<ANpcUnit>(GameState->GetUnitByIndex(i));
         
@@ -71,7 +71,7 @@ void ANpcController::CheckForNextAction()
 
     bool bAllNpcAreSleeping = true;
 
-    for (int32 j = 0; j < GameState->GetUnitsQuantity(); j++)
+    for (int32 j = 0; j < GameState->GetUnitsNum(); j++)
     {
         if (ANpcUnit* NpcUnit = Cast<ANpcUnit>(GameState->GetUnitByIndex(j)))
         {
@@ -95,7 +95,7 @@ void ANpcController::CheckForNextAction()
                     ABaseUnit* PossibleObjectiveUnit = nullptr;
                     int32 PossibleObjectiveUnitDistance = -1;
 
-                    for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+                    for (int32 i = 0; i < GameState->GetUnitsNum(); i++)
                     {
                         PossibleObjectiveUnit = GameState->GetUnitByIndex(i);
 
@@ -179,7 +179,7 @@ void ANpcController::OnUnitUpdateStats(int32 UnitIndex)
     {
         bool bAllUnitsAreDead = true;
 
-        for (int32 i = 0; i < GameState->GetUnitsQuantity(); i++)
+        for (int32 i = 0; i < GameState->GetUnitsNum(); i++)
         {
             if (ABaseUnit* UnitToCheck = GameState->GetUnitByIndex(i))
             {
