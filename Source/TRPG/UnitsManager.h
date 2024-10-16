@@ -11,7 +11,7 @@ struct FUnitInitData;
 enum class EUnitControllerOwner : uint8;
 
 UCLASS()
-class TRPG_API AUnitsManager : public AActor
+class TRPG_API UUnitsManager : public UObject
 {
 	GENERATED_BODY()
 	

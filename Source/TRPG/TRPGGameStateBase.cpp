@@ -18,8 +18,8 @@ void ATRPGGameStateBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	Terrain = GetWorld()->SpawnActor<ATerrain>();
-	UnitsManager = GetWorld()->SpawnActor<AUnitsManager>();
+	Terrain = NewObject<UTerrain>(this);
+	UnitsManager = NewObject<UUnitsManager>(this);
 	NpcController = GetWorld()->SpawnActor<ANpcController>();
 
 	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
@@ -42,6 +42,8 @@ void ATRPGGameStateBase::BeginPlay()
 			DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
 		}
 	}
+
+	Terrain->CreateMap();
 
 	// Create a bunch of unit just to test the map. For now, the initial unit chosed by the player plus 2 allies plus an npc are spawned
 	const TArray<FUnitInitData> UnitsInitData = {

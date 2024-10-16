@@ -76,7 +76,7 @@ void ATRPGPlayerState::SavePlayerResults()
 }
 
 
-void ATRPGPlayerState::SetTerrain(ATerrain* TerrainPointer)
+void ATRPGPlayerState::SetTerrain(UTerrain* TerrainPointer)
 {
 	check(TerrainPointer)
 	Terrain = TerrainPointer;

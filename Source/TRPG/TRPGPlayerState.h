@@ -8,7 +8,7 @@
 
 // Forward declarations
 class ABaseUnit;
-class ATerrain;
+class UTerrain;
 enum class EUnitState : uint8;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnUnitSelected, ABaseUnit*)
@@ -29,7 +29,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Reference to the terrain class
-	ATerrain* Terrain;
+	UTerrain* Terrain;
 
 	// Reference to the unit playing in this turn. It is always dependent of the GameState
 	ABaseUnit* ActiveUnit;
@@ -55,7 +55,7 @@ public:
 	void SavePlayerResults();
 
 	// Set a reference to the terrain class created by the GameState
-	void SetTerrain(ATerrain* TerrainPointer);
+	void SetTerrain(UTerrain* TerrainPointer);
 	
 	// Set a reference to the unit playing in this turn and modify the HUD
 	void SetActiveUnit(ABaseUnit* NewActiveUnit);

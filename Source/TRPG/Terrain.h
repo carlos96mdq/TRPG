@@ -11,13 +11,10 @@ class ABaseTile;
 class ABaseUnit;
 
 UCLASS()
-class TRPG_API ATerrain : public AActor
+class TRPG_API UTerrain : public UObject
 {
 	GENERATED_BODY()
 	
-	// Called to create a new map whith tiles
-	void CreateMap();
-
 	// Tiles quantity that map uses
 	int32 MapMaxRows = 9;
 	int32 MapMaxColumns = 9;
@@ -29,16 +26,9 @@ class TRPG_API ATerrain : public AActor
 	// Array of tiles being selected at the moment
 	TArray<ABaseTile*> AvailableTiles;
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
 public:	
-	// Sets default values for this actor's properties
-	ATerrain();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	// Called to create a new map whith tiles
+	void CreateMap();
 
 	// Save in an array all the tiles that are available to the current action and show them in map
 	void SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles=true);

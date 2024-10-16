@@ -6,20 +6,7 @@
 #include "BaseTile.h"
 #include "BaseUnit.h"
 
-ATerrain::ATerrain()
-{
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-}
-
-void ATerrain::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	CreateMap();
-}
-
-void ATerrain::CreateMap()
+void UTerrain::CreateMap()
 {
 	if (ATRPGGameStateBase* GameState = Cast<ATRPGGameStateBase>(GetWorld()->GetGameState()))
 	{
@@ -56,7 +43,7 @@ void ATerrain::CreateMap()
 	}
 }
 
-void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
+void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 {
 	// First clean any current available tile
 	CleanAvailableTiles();
@@ -231,7 +218,7 @@ void ATerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 	}
 }
 
-bool ATerrain::CheckAvailableTile(ABaseTile* TileNeeded)
+bool UTerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 {
 	int32 TileIdx = AvailableTiles.Find(TileNeeded);
 
@@ -241,7 +228,7 @@ bool ATerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 		return true;
 }
 
-bool ATerrain::CheckAvailableTile(FVector EnemyPosition)
+bool UTerrain::CheckAvailableTile(FVector EnemyPosition)
 {
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
@@ -252,7 +239,7 @@ bool ATerrain::CheckAvailableTile(FVector EnemyPosition)
 	return false;
 }
 
-void ATerrain::CleanAvailableTiles()
+void UTerrain::CleanAvailableTiles()
 {
 	for (auto Tile : AvailableTiles)
 	{
@@ -262,7 +249,7 @@ void ATerrain::CleanAvailableTiles()
 	AvailableTiles.Empty();
 }
 
-TArray<FVector> ATerrain::GetPath(ABaseTile* DestinationTile)
+TArray<FVector> UTerrain::GetPath(ABaseTile* DestinationTile)
 {
 	ABaseTile* CurrentTile = DestinationTile;
 	FVector CurrentTileLocation = CurrentTile->GetActorLocation();
@@ -307,7 +294,7 @@ TArray<FVector> ATerrain::GetPath(ABaseTile* DestinationTile)
 	return PathLocations;
 }
 
-int32 ATerrain::GetTileCost(FVector EnemyPosition) const
+int32 UTerrain::GetTileCost(FVector EnemyPosition) const
 {
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
@@ -316,11 +303,5 @@ int32 ATerrain::GetTileCost(FVector EnemyPosition) const
 			return AvailableTiles[i]->GetMovementCost();
 	}
 	return -1;
-}
-
-void ATerrain::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 

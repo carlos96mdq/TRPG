@@ -11,8 +11,8 @@
 class ABaseTile;
 class ABaseUnit;
 class ANpcUnit;
-class ATerrain;
-class AUnitsManager;
+class UTerrain;
+class UUnitsManager;
 class ANpcController;
 enum class EUnitControllerOwner : uint8;
 
@@ -99,10 +99,12 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	TArray<TArray<float>> DamageTypeModifiers;
 
 	// Class Terrain that manage the map data
-	TObjectPtr<ATerrain> Terrain;
+	UPROPERTY()
+	TObjectPtr<UTerrain> Terrain;
 
 	// Class that manages the units
-	TObjectPtr<AUnitsManager> UnitsManager;
+	UPROPERTY()
+	TObjectPtr<UUnitsManager> UnitsManager;
 
 	// Class that controlles the actions and movements of all npcs in map
 	TObjectPtr<ANpcController> NpcController;
@@ -139,7 +141,7 @@ public:
 	TSubclassOf<ABaseTile> GetWallTileClass() const { return WallTileClass; };
 	TSubclassOf<ABaseUnit> GetBaseUnitClass() const { return BaseUnitClass; };
 	TSubclassOf<ANpcUnit> GetNpcUnitClass() const { return NpcUnitClass; };
-	ATerrain* GetTerrain() const { return Terrain; };
+	UTerrain* GetTerrain() const { return Terrain; };
 	ABaseUnit* GetUnitByIndex(int32 Index) const;
 	int32 GetUnitsNum() const;
 	float GetDamageTypeModifier(int32 DamageType, int32 DefenderType, int32 DefenderSubType) const;

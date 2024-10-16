@@ -9,7 +9,7 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogUnitsManager, Log, All)
 
-void AUnitsManager::CreateNewUnits(const TArray<FUnitInitData>& UnitsData)
+void UUnitsManager::CreateNewUnits(const TArray<FUnitInitData>& UnitsData)
 {
     for (const FUnitInitData& UnitData : UnitsData)
     {
@@ -17,7 +17,7 @@ void AUnitsManager::CreateNewUnits(const TArray<FUnitInitData>& UnitsData)
     }
 }
 
-void AUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, const FTransform& Transform)
+void UUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner ControllerOwner, const FTransform& Transform)
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
 	int32 NewUnitIndex;
@@ -34,12 +34,12 @@ void AUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner Controll
 	// Bind all the units delegate to this actor
 	//TODO because this is the online actor that should be bind to those delegates, convert them from multicast to onecast
 	//TODO maybe I should change all the array access [] UnitsArray[NewUnitIndex] for an unique access and a pointer
-	UnitsArray[NewUnitIndex]->OnUnitStopsMoving.AddUObject(this, &AUnitsManager::OnUnitStops);
-	UnitsArray[NewUnitIndex]->OnUnitStopsAction.AddUObject(this, &AUnitsManager::OnUnitStops);
-	UnitsArray[NewUnitIndex]->OnUnitUpdateStats.BindUObject(this, &AUnitsManager::OnUnitUpdateStats);
+	UnitsArray[NewUnitIndex]->OnUnitStopsMoving.AddUObject(this, &UUnitsManager::OnUnitStops);
+	UnitsArray[NewUnitIndex]->OnUnitStopsAction.AddUObject(this, &UUnitsManager::OnUnitStops);
+	UnitsArray[NewUnitIndex]->OnUnitUpdateStats.BindUObject(this, &UUnitsManager::OnUnitUpdateStats);
 }
 
-void AUnitsManager::UnitsStartTurn(EUnitControllerOwner ControllerOwner)
+void UUnitsManager::UnitsStartTurn(EUnitControllerOwner ControllerOwner)
 {
     for (ABaseUnit* Unit : UnitsArray)
     {
@@ -48,7 +48,7 @@ void AUnitsManager::UnitsStartTurn(EUnitControllerOwner ControllerOwner)
     }
 }
 
-void AUnitsManager::UnitsEndTurn(EUnitControllerOwner ControllerOwner)
+void UUnitsManager::UnitsEndTurn(EUnitControllerOwner ControllerOwner)
 {
     for (ABaseUnit* Unit : UnitsArray)
     {
@@ -57,7 +57,7 @@ void AUnitsManager::UnitsEndTurn(EUnitControllerOwner ControllerOwner)
     }
 }
 
-void AUnitsManager::OnUnitUpdateStats(int32 UnitIndex)
+void UUnitsManager::OnUnitUpdateStats(int32 UnitIndex)
 {
     if (UnitsArray.IsValidIndex(UnitIndex))
     {
@@ -92,7 +92,7 @@ void AUnitsManager::OnUnitUpdateStats(int32 UnitIndex)
         UE_LOG(LogUnitsManager, Display, TEXT("Tried to access an invalid Unit with index %d"), UnitIndex);
 }
 
-void AUnitsManager::OnUnitStops(int32 UnitIndex)
+void UUnitsManager::OnUnitStops(int32 UnitIndex)
 {
     if (UnitsArray.IsValidIndex(UnitIndex))
     {
@@ -113,7 +113,7 @@ void AUnitsManager::OnUnitStops(int32 UnitIndex)
     }
 }
 
-TArray<FVector> AUnitsManager::GetAllUnitLocations()
+TArray<FVector> UUnitsManager::GetAllUnitLocations()
 {
     TArray<FVector> Locations;
 
@@ -123,7 +123,7 @@ TArray<FVector> AUnitsManager::GetAllUnitLocations()
     return Locations;
 }
 
-ABaseUnit* AUnitsManager::GetUnitByIndex(int32 Index)
+ABaseUnit* UUnitsManager::GetUnitByIndex(int32 Index)
 {
     if (Index >= 0 && Index < UnitsArray.Num())
         return UnitsArray[Index];
@@ -131,7 +131,7 @@ ABaseUnit* AUnitsManager::GetUnitByIndex(int32 Index)
         return nullptr;
 }
 
-int32 AUnitsManager::GetUnitsNum() const
+int32 UUnitsManager::GetUnitsNum() const
 {
     return UnitsArray.Num();
 }
