@@ -22,6 +22,8 @@ class TRPG_API AMMPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
+	void LoadPlayerMatchesRecord();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

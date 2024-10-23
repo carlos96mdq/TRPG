@@ -10,6 +10,7 @@
 class UMMUnitsSelectionWidget;
 class UButton;
 class UImage;
+class UTextBlock;
 
 /**
  * 
@@ -35,4 +36,21 @@ public:
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UButton* PlayButton;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchesPlayedValue;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchesWonValue;
+
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* MatchesLostValue;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* UnitsDefeatedValue;
+	
+	UPROPERTY(meta = (BindWidget))
+	UTextBlock* UnitsLostValue;
+
+	void SetPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData);
 };

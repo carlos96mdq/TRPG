@@ -2,10 +2,13 @@
 
 
 #include "MMPlayerState.h"
+#include "MMPlayerController.h"
 #include "Engine/DataTable.h"
 #include "UnitModel.h"
 #include "BaseUnit.h"
 #include "TRPGGameInstanceSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "MySaveGame.h"
 
 void AMMPlayerState::BeginPlay()
 {
@@ -21,6 +24,8 @@ void AMMPlayerState::BeginPlay()
 
 	// Create selected unit model and spawn in the world
 	SelectedUnitModel = GetWorld()->SpawnActor<AUnitModel>(FVector(0.0f, 0.0f, 50.0f), FRotator(0.0f, 0.0f, 0.0f));
+
+	LoadPlayerMatchesRecord();
 }
 
 UTexture2D* AMMPlayerState::GetUnitIcon(int32 UnitIndex) const
@@ -58,5 +63,29 @@ void AMMPlayerState::SetSelectedUnit(int32 UnitIndex)
 
 		// Save selected unit name in Game Instance subsystem
 		GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->SetSelectedUnitName(UnitName);
+	}
+}
+
+void AMMPlayerState::LoadPlayerMatchesRecord()
+{
+	UMySaveGame* SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::CreateSaveGameObject(UMySaveGame::StaticClass()));
+
+	// If there's already saved data, load it
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("PlayerSaveSlot"), 0))
+	{
+		SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("PlayerSaveSlot"), 0));
+
+		TArray<int> LoadedData = {
+			SaveGameInstance->MatchesPlayed,
+			SaveGameInstance->MatchesWon,
+			SaveGameInstance->MatchesLost,
+			SaveGameInstance->UnitsDefeated,
+			SaveGameInstance->UnitsLost
+		};
+
+		if (AMMPlayerController* MyPlayerController = Cast<AMMPlayerController>(GetPlayerController()))
+		{
+			MyPlayerController->ShowPlayerMatchesRecordData(LoadedData);
+		}
 	}
 }

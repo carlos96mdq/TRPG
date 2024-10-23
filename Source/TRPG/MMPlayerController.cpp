@@ -24,3 +24,8 @@ void AMMPlayerController::BeginPlay()
     check(HUDWidget);
     HUDWidget->AddToViewport();
 }
+
+void AMMPlayerController::ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData)
+{
+    HUDWidget->SetPlayerMatchesRecordData(PlayerMatchesRecordData);
+}

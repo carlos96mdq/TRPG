@@ -69,8 +69,6 @@ void ATRPGPlayerState::SavePlayerResults()
 	SaveGameInstance->UnitsDefeated += DataToSave.UnitsDefeated;
 	SaveGameInstance->UnitsLost += DataToSave.UnitsLost;
 
-	UE_LOG(LogPlayerState, Display, TEXT("The values of MatchesPlayed %d, MatchesWon = %d, MatchesLost = %d, UnitsDefeated = %d and UnitsLost = %d were saved"), SaveGameInstance->MatchesPlayed, SaveGameInstance->MatchesWon, SaveGameInstance->MatchesLost, SaveGameInstance->UnitsDefeated, SaveGameInstance->UnitsLost);
-
 	// Save the data back to the slot
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("PlayerSaveSlot"), 0);
 }

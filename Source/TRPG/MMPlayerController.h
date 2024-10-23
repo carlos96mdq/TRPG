@@ -33,4 +33,6 @@ public:
 
 	// Allows the PlayerController to set up custom input bindings
 	virtual void SetupInputComponent() override;
+
+	void ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData);
 };
