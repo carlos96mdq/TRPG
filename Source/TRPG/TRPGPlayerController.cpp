@@ -87,8 +87,11 @@ void ATRPGPlayerController::BeginPlay()
 void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex);
-    ActiveUnit->SetUnitState(EUnitState::Idle);
+
+    if (ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex))
+    {
+        ActiveUnit->SetUnitState(EUnitState::Idle);
+    }
 
     PlayerActiveUnitIndex = NewActiveUnit->GetUnitIndex();
     OnMoveAction();
@@ -133,7 +136,7 @@ void ATRPGPlayerController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
         {
             if (ABaseUnit* Unit = GameState->GetUnitByIndex(i))
             {
-                if (Unit->GetControllerOwner() == ControllerOwnerName && Unit->IsAlive())
+                if (Unit->GetControllerOwner() == ControllerOwnerName)
                 {
                     SetActiveUnit(Unit);
                     break;
@@ -195,34 +198,35 @@ void ATRPGPlayerController::OnMouseRightClicked()
     GetHitResultUnderCursor(ECollisionChannel::ECC_WorldDynamic, false, HitResult);
 
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex);
-    check(ActiveUnit);
 
-    if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove)
+    if (ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex))
     {
-        if (ABaseTile* DestinationTile = Cast<ABaseTile>(HitResult.GetActor()))
+        if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove)
         {
-            if (GameState->GetTerrain()->CheckAvailableTile(DestinationTile))
+            if (ABaseTile* DestinationTile = Cast<ABaseTile>(HitResult.GetActor()))
             {
-                TArray<FVector> TilesPath = GameState->GetTerrain()->GetPath(DestinationTile);
-                ActiveUnit->MoveUnit(TilesPath);
-                GameState->GetTerrain()->CleanAvailableTiles();
-                HUDWidget->UpdateActiveUnitData(ActiveUnit);
+                if (GameState->GetTerrain()->CheckAvailableTile(DestinationTile))
+                {
+                    TArray<FVector> TilesPath = GameState->GetTerrain()->GetPath(DestinationTile);
+                    ActiveUnit->MoveUnit(TilesPath);
+                    GameState->GetTerrain()->CleanAvailableTiles();
+                    HUDWidget->UpdateActiveUnitData(ActiveUnit);
+                }
             }
         }
-    }
-    else if (ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
-    {
-        UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The Active Unit is Ready to Combat"));
-        if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
+        else if (ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
         {
-            UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] And another unit was clicked"));
-            if (GameState->GetTerrain()->CheckAvailableTile(HitUnit->GetActorLocation()))
+            UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The Active Unit is Ready to Combat"));
+            if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
             {
-                UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The message to Try to Use the Current Action was send to the Active Unit"));
-                ActiveUnit->TryUsingCurrentAction(HitUnit);
-                GameState->GetTerrain()->CleanAvailableTiles();
-                HUDWidget->UpdateActiveUnitData(ActiveUnit);
+                UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] And another unit was clicked"));
+                if (GameState->GetTerrain()->CheckAvailableTile(HitUnit->GetActorLocation()))
+                {
+                    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The message to Try to Use the Current Action was send to the Active Unit"));
+                    ActiveUnit->TryUsingCurrentAction(HitUnit);
+                    GameState->GetTerrain()->CleanAvailableTiles();
+                    HUDWidget->UpdateActiveUnitData(ActiveUnit);
+                }
             }
         }
     }
@@ -231,13 +235,13 @@ void ATRPGPlayerController::OnMouseRightClicked()
 void ATRPGPlayerController::OnUnitStops(int32 PlayerUnitIndex)
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* Unit = GameState->GetUnitByIndex(PlayerUnitIndex);
-    check(Unit);
-
-    if (PlayerUnitIndex == PlayerActiveUnitIndex)
+    if (ABaseUnit* Unit = GameState->GetUnitByIndex(PlayerUnitIndex))
     {
-        OnMoveAction();
-        HUDWidget->UpdateActiveUnitData(Unit);
+        if (PlayerUnitIndex == PlayerActiveUnitIndex)
+        {
+            OnMoveAction();
+            HUDWidget->UpdateActiveUnitData(Unit);
+        }
     }
 }
 
@@ -253,21 +257,24 @@ void ATRPGPlayerController::OnUnitUpdateStats(ABaseUnit* Unit)
 void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex);
-    check(ActiveUnit);
 
-    ActiveUnit->SetCombatAction(ActionPosition);
-    ActiveUnit->SetUnitState((EUnitState::ReadyToCombat));
-    GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
+    if (ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex))
+    {
+        ActiveUnit->SetCombatAction(ActionPosition);
+        ActiveUnit->SetUnitState((EUnitState::ReadyToCombat));
+        GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
+    }
 }
 
 void ATRPGPlayerController::OnMoveAction()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex);
     
-    ActiveUnit->SetUnitState(EUnitState::ReadyToMove);
-    GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
+    if (ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex))
+    {
+        ActiveUnit->SetUnitState(EUnitState::ReadyToMove);
+        GameState->GetTerrain()->SetAvailableTiles(ActiveUnit);
+    }
 }
 
 void ATRPGPlayerController::OnEndTurnAction()

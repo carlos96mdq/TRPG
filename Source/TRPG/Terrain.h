@@ -26,9 +26,18 @@ class TRPG_API UTerrain : public UObject
 	// Array of tiles being selected at the moment
 	TArray<ABaseTile*> AvailableTiles;
 
+	// Set the movement cost of all tiles from the Origin (0 cost) to the max range. In case of not range, set the movement cost of all tiles
+	// The obstacle tiles as walls are never processed
+	TArray<ABaseTile*> SetMovementCost(ABaseTile* OriginTile, int32 MaxRange=-1, int32 MinRange=0);
+
+	// Clean all Tiles send to this function
+	void CleanTiles(const TArray<ABaseTile*>& TilesToClean);
+
 public:	
 	// Called to create a new map whith tiles
 	void CreateMap();
+
+	ABaseUnit* FindNearestEnemy(ABaseUnit* ActiveUnit);
 
 	// Save in an array all the tiles that are available to the current action and show them in map
 	void SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles=true);
@@ -39,11 +48,14 @@ public:
 	// Check if the tile receive is inside the selected ones
 	bool CheckAvailableTile(FVector EnemyPosition);
 
-	// Clean all the selected tiles in map
+	// Clean all the available tiles
 	void CleanAvailableTiles();
 
-	// Get all the tiles that compund the path from the current position to the destination
+	// Get all the tiles in order to make a path between the origin and a destination, being the first tile the destination.
+	// In case a destination further away than the max units range according to its current energy, the further possible path will be returned
+	// With the Destination OffSet, the function caller indicates that the Path has to reach the destination - offset tiles
 	TArray<FVector> GetPath(ABaseTile* DestinationTile);
+	TArray<FVector> GetPath(const FVector& Destination, int32 DestinationOffSet=0);
 
 	int32 GetTileCost(FVector EnemyPosition) const;
 };

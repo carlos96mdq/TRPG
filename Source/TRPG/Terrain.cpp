@@ -6,6 +6,8 @@
 #include "BaseTile.h"
 #include "BaseUnit.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogTerrain, Log, All)
+
 void UTerrain::CreateMap()
 {
 	if (ATRPGGameStateBase* GameState = Cast<ATRPGGameStateBase>(GetWorld()->GetGameState()))
@@ -43,19 +45,165 @@ void UTerrain::CreateMap()
 	}
 }
 
+
+TArray<ABaseTile*> UTerrain::SetMovementCost(ABaseTile* OriginTile, int32 MaxRange, int32 MinRange)
+{
+	if (OriginTile == nullptr)
+	{
+		UE_LOG(LogTerrain, Warning, TEXT("Couldn't set the tiles movement cost because none OriginTile was received"));
+		return TArray<ABaseTile*>();
+	}
+
+	OriginTile->SetMovementCost(0);
+	TArray<ABaseTile*> ProcessedTiles = { OriginTile };
+	TArray<ABaseTile*> TilesInRange;
+
+	if (MinRange == 0)
+	{
+		TilesInRange.Emplace(OriginTile);
+	}
+	
+	// Iterate through all tiles to set their cost, but only save as available the ones inside the MaxRange
+	bool bThereAreMoreTilesToProcess = true;
+	int32 Range = 1;
+
+	while (bThereAreMoreTilesToProcess)
+	{
+		// In each Range iteration we check for the adjacent tiles to the furthers of the already processed ones
+		for (ABaseTile* ReferenceTile : ProcessedTiles)
+		{
+			if (ReferenceTile->GetType() == TileType::Wall)
+			{
+				continue;
+			}
+
+			if (ReferenceTile->GetMovementCost() == Range - 1)
+			{
+				FVector ReferenceTileLocation = ReferenceTile->GetActorLocation();
+
+				// Get all the adjacent tiles to the referenced one
+				for (ABaseTile* TileToProcess : TilesArray)
+				{
+					// Check if tile is not already processed
+					if (TileToProcess->GetMovementCost() == -1)
+					{
+						FVector TileToProcessLocation = TileToProcess->GetActorLocation();
+						float TileDistance = (FMath::Abs(ReferenceTileLocation.X - TileToProcessLocation.X) + FMath::Abs(ReferenceTileLocation.Y - TileToProcessLocation.Y)) / TileSize;
+
+						if (TileDistance <= (1.1f))
+						{
+							TileToProcess->SetMovementCost(Range);
+						}
+					}
+				}
+			}
+		}
+
+		// Now insert all the processed tiles inside the return array only if it is into the range. In case no range was specified, return all tiles.
+		// Always assume that there are not more tiles to process until we find at least one in this iteration. In the final iteration none tile will be processed
+		bThereAreMoreTilesToProcess = false;
+		for (ABaseTile* Tile : TilesArray)
+		{
+			if (Tile->GetMovementCost() == Range)
+			{
+				bThereAreMoreTilesToProcess = true;
+				ProcessedTiles.Emplace(Tile);
+				
+				if (MaxRange == -1 || Range <= MaxRange && Range >= MinRange)
+				{
+					TilesInRange.Emplace(Tile);
+				}
+			}
+		}
+
+		Range++;
+	}
+	return TilesInRange;
+}
+
+ABaseUnit* UTerrain::FindNearestEnemy(ABaseUnit* ActiveUnit)
+{
+	CleanTiles(TilesArray);
+
+	// Set the cost of all tiles, taking as origin the one below this unit
+	FVector UnitLocation = ActiveUnit->GetActorLocation();
+	ABaseTile* ActiveUnitTile = nullptr;
+
+	for (ABaseTile* Tile : TilesArray)
+	{
+		// Get tile distance from unit
+		FVector TileLocation = Tile->GetActorLocation();
+		float TileDistance = (FMath::Abs(UnitLocation.X - TileLocation.X) + FMath::Abs(UnitLocation.Y - TileLocation.Y)) / TileSize;
+
+		// The tile is inside the max range
+		if (TileDistance <= 0.9f)
+		{
+			ActiveUnitTile = Tile;
+			break;
+		}
+	}
+
+	if (ActiveUnitTile)
+	{
+		SetMovementCost(ActiveUnitTile);
+
+		ABaseUnit* NearestEnemy = nullptr;
+		int32 NearestEnemyCost = -1;
+
+		ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+
+		for (int32 UnitIdx = 0; UnitIdx < GameState->GetUnitsNum(); UnitIdx++)
+		{
+			ABaseUnit* EnemyUnit = GameState->GetUnitByIndex(UnitIdx);
+
+			if (EnemyUnit && EnemyUnit->GetControllerOwner() != ActiveUnit->GetControllerOwner())
+			{
+				FVector EnemyUnitLocation = EnemyUnit->GetActorLocation();
+				ABaseTile* EnemyUnitTile = nullptr;
+
+				for (ABaseTile* Tile : TilesArray)
+				{
+					FVector TileLocation = Tile->GetActorLocation();
+					float TileDistance = (FMath::Abs(UnitLocation.X - TileLocation.X) + FMath::Abs(UnitLocation.Y - TileLocation.Y)) / TileSize;
+
+					// The tile is inside the max range
+					if (TileDistance <= 0.9f)
+					{
+						EnemyUnitTile = Tile;
+						break;
+					}
+				}
+
+				if (EnemyUnitTile && (NearestEnemyCost == -1 || EnemyUnitTile->GetMovementCost() < NearestEnemyCost))
+				{
+					NearestEnemy = EnemyUnit;
+					NearestEnemyCost = EnemyUnitTile->GetMovementCost();
+				}
+			}
+		}
+		return NearestEnemy;
+	}
+	else
+	{
+		UE_LOG(LogTerrain, Warning, TEXT("Couldn't find the tile below this unit when trying to find its nearest enemy"));
+		return nullptr;
+	}
+}
+
 void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 {
 	// First clean any current available tile
-	CleanAvailableTiles();
+	CleanTiles(TilesArray);
 	
 	FVector UnitLocation = ActiveUnit->GetActorLocation();
-	int MinRange = 0;
-	int MaxRange = 0;
+	int32 MinRange = 0;
+	int32 MaxRange = 0;
 
 	// Depending on action, set min and max ranges
 	EUnitState State = ActiveUnit->GetUnitState();
 	if (State == EUnitState::ReadyToMove)
 	{
+		MinRange = 1;
 		MaxRange = ActiveUnit->GetEnergy();
 	}
 	else if (State == EUnitState::ReadyToCombat)
@@ -71,7 +219,7 @@ void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 	// Save all obstacle tiles to use when attacking
 	// Get the adjacent tiles too
 	TArray<ABaseTile*> PossibleTiles;
-	TArray<ABaseTile*> ObstacleTiles;
+	ABaseTile* OriginTile = nullptr;
 	for (ABaseTile* Tile : TilesArray)
 	{
 		// Get tile distance from unit
@@ -83,6 +231,11 @@ void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 		{
 			bool bAvailableTile = true;
 
+			// Before anything save the origin tile. This is made here because later the oriign tile is excepted if in movement
+			if (TileDistance <= 0.9f)
+			{
+				OriginTile = Tile;
+			}
 			// If the action is movement, discard all tiles where there are units
 			if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove)
 			{
@@ -98,75 +251,21 @@ void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 			if (bAvailableTile)
 			{
 				// Check if tile is an obstacle to save in other array
-				if (Tile->GetType() == TileType::Wall)
-				{
-					ObstacleTiles.Emplace(Tile);
-				}
-				// If it is an adjacent tile it is saved as available (as they are needed to calculate the pathfinding the min range is not taken into account yet)
-				else if (TileDistance <= 1.1f)
-				{
-					if (TileDistance <= 0.9f)
-					{
-						Tile->SetMovementCost(0);
-					}
-					else
-					{
-						Tile->SetMovementCost(1);
-					}
-					AvailableTiles.Emplace(Tile);
-				}
-				else
+				if (Tile->GetType() != TileType::Wall)
 				{
 					PossibleTiles.Emplace(Tile);
 				}
+
 			}
 		}
 	}
 
-	// Get all the available tiles to this action
-	for (int32 i = 2; i <= MaxRange; i++)
+	// Although we only ask and get the available tiles, we have to set the cost in all tiles
+	AvailableTiles = SetMovementCost(OriginTile, MaxRange, MinRange);
+
+	// Delete all tiles that can't be reached because of an obstacle (this doesn't affect the movement, only attacks)
+	if (ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
 	{
-		// Check for all adjacent tiles to the already selected ones
-		for (ABaseTile* ReferenceTile : AvailableTiles)
-		{
-			// Only check in the further tiles from the center
-			if (ReferenceTile->GetMovementCost() == i - 1)
-			{
-				FVector ReferenceTileLocation = ReferenceTile->GetActorLocation();
-
-				// Get all the adjacent tiles to the currently selected tiles
-				for (ABaseTile* PossibleTile : PossibleTiles)
-				{
-					// Check if tile is not already inside de SelectedTiles table
-					if (PossibleTile->GetMovementCost() == -1)
-					{
-						FVector PossibleTileLocation = PossibleTile->GetActorLocation();
-						float TileDistance = (FMath::Abs(ReferenceTileLocation.X - PossibleTileLocation.X) + FMath::Abs(ReferenceTileLocation.Y - PossibleTileLocation.Y)) / TileSize;
-
-						if (TileDistance <= (1.1f))
-						{
-							PossibleTile->SetMovementCost(i);
-						}
-					}
-				}
-			}
-		}
-
-		// Insert all posible tiles to the SelectedTiles table
-		for (ABaseTile* PossibleTile : PossibleTiles)
-		{
-			if (PossibleTile->GetMovementCost() == i)
-			{
-				AvailableTiles.Emplace(PossibleTile);
-			}
-		}
-	}
-
-	// Delete all tiles limited by the min range
-	// Or when attacking, delete all tiles that can't be reached because of an obstacle or a min range
-	if (MinRange >= 1 || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
-	{
-		//UE_LOG(LogTemp, Warning, TEXT("Now, all the tiles that are blocked or are more near than the minrange of %d will be removed"), MinRange);
 		TArray<int32> IndexesToRemove;
 
 		// Verify in each obstacle all tiles that are view-blocked
@@ -177,12 +276,9 @@ void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 			Destination.Z = UnitLocation.Z;
 			FHitResult HitObstacle;
 
-			// Check with a raycast if an obstacle is in between the unit and the destination (in terms of visibility)
-			if (AvailableTile->GetMovementCost() < MinRange
-				|| GetWorld()->SweepSingleByChannel(HitObstacle, UnitLocation, Destination, FQuat::Identity, ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(1.0f)))
+			if (GetWorld()->SweepSingleByChannel(HitObstacle, UnitLocation, Destination, FQuat::Identity, ECollisionChannel::ECC_Visibility, FCollisionShape::MakeSphere(1.0f)))
 			{
 				//DrawDebugCylinder(GetWorld(), UnitLocation, Destination, 1.0f, 5, FColor::Red, true, 10.0f);
-				AvailableTile->SetMovementCost(-1);
 				AvailableTiles.RemoveAtSwap(i);
 			}
 			else
@@ -228,11 +324,11 @@ bool UTerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 		return true;
 }
 
-bool UTerrain::CheckAvailableTile(FVector EnemyPosition)
+bool UTerrain::CheckAvailableTile(FVector TileLocation)
 {
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
-		FVector EnemyTilePosition = FVector(EnemyPosition.X, EnemyPosition.Y, 0.0f);
+		FVector EnemyTilePosition = FVector(TileLocation.X, TileLocation.Y, 0.0f);
 		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
 			return true;
 	}
@@ -241,52 +337,81 @@ bool UTerrain::CheckAvailableTile(FVector EnemyPosition)
 
 void UTerrain::CleanAvailableTiles()
 {
-	for (auto Tile : AvailableTiles)
+	CleanTiles(AvailableTiles);
+}
+
+void UTerrain::CleanTiles(const TArray<ABaseTile*>& TilesToClean)
+{
+	for (auto Tile : TilesToClean)
 	{
 		Tile->SetGlowingEffect(false);
 		Tile->SetMovementCost(-1);
 	}
-	AvailableTiles.Empty();
+	if (AvailableTiles == TilesToClean)
+	{
+		AvailableTiles.Empty();
+	}
 }
 
 TArray<FVector> UTerrain::GetPath(ABaseTile* DestinationTile)
 {
-	ABaseTile* CurrentTile = DestinationTile;
-	FVector CurrentTileLocation = CurrentTile->GetActorLocation();
-	TArray<FVector> PathLocations;
+	FVector TileLocation = DestinationTile->GetActorLocation();
+	return GetPath(TileLocation);
+}
 
-	// Add Destination as the last location
-	PathLocations.Emplace(FVector(CurrentTileLocation.X, CurrentTileLocation.Y, CurrentTileLocation.Z));
+TArray<FVector> UTerrain::GetPath(const FVector& Destination, int32 DestinationOffSet)
+{
+	FVector CurrentTileLocation(Destination);
+	TArray<FVector> PathLocations;
+	int32 LeftOffset = DestinationOffSet;
+
+	// Add Destination as the last location if reachable with the unit current energy
+	if (LeftOffset <= 0 && CheckAvailableTile(CurrentTileLocation))
+	{
+		PathLocations.Emplace(FVector(CurrentTileLocation.X, CurrentTileLocation.Y, CurrentTileLocation.Z));
+	}
+	else
+	{
+		LeftOffset--;
+	}
 
 	// Check for each tile location in the path
 	// As all movement cost are already measured, this algorithm starts looking from the destination to the origin
-	for (int32 i = (DestinationTile->GetMovementCost() - 1); i > 0; i--)
+	for (int32 i = GetTileCost(Destination) - 1; i > 0; i--)
 	{
 		TArray<ABaseTile*> AdjacentTiles;
 
 		// Get all available adjacent tiles to the current tile
-		for (ABaseTile* AvailableTile : AvailableTiles)
+		for (ABaseTile* PossibleAdjacentTile : TilesArray)
 		{
 			// Get tile distance from unit
-			FVector AvailableTileLocation = AvailableTile->GetActorLocation();
-			float TileDistance = FMath::Abs(CurrentTileLocation.X - AvailableTileLocation.X) + FMath::Abs(CurrentTileLocation.Y - AvailableTileLocation.Y);
+			FVector PossibleAdjacentTileLocation = PossibleAdjacentTile->GetActorLocation();
+			float TileDistance = FMath::Abs(CurrentTileLocation.X - PossibleAdjacentTileLocation.X) + FMath::Abs(CurrentTileLocation.Y - PossibleAdjacentTileLocation.Y);
 
 			// Get all adjacent tiles
 			if (TileDistance / TileSize <= 1.1f && TileDistance / TileSize > 0.9f)
 			{
-				AdjacentTiles.Emplace(AvailableTile);
+				AdjacentTiles.Emplace(PossibleAdjacentTile);
 			}
 		}
 
-		// Get first available adjacent tile to meet the movement cost requeriment
+		// Get first available adjacent tile to meet the movement cost requeriment. Only 1 tile should be retreive in this section
 		for (ABaseTile* AdjacentTile : AdjacentTiles)
 		{
 			if (AdjacentTile->GetMovementCost() == i)
 			{
-				// Set new current tile and save its location in the path
-				CurrentTile = AdjacentTile;
-				CurrentTileLocation = CurrentTile->GetActorLocation();
-				PathLocations.Emplace(FVector(CurrentTileLocation.X, CurrentTileLocation.Y, CurrentTileLocation.Z));
+				CurrentTileLocation = AdjacentTile->GetActorLocation();
+
+				// Save tile inside the path ONLY if it is an available tile
+				if (LeftOffset <= 0 && CheckAvailableTile(AdjacentTile))
+				{
+					PathLocations.Emplace(FVector(CurrentTileLocation.X, CurrentTileLocation.Y, CurrentTileLocation.Z));
+				}
+				else
+				{
+					LeftOffset--;
+				}
+
 				break;
 			}
 		}
@@ -296,11 +421,13 @@ TArray<FVector> UTerrain::GetPath(ABaseTile* DestinationTile)
 
 int32 UTerrain::GetTileCost(FVector EnemyPosition) const
 {
-	for (auto i = 0; i < AvailableTiles.Num(); i++)
+	for (auto i = 0; i < TilesArray.Num(); i++)
 	{
 		FVector EnemyTilePosition = FVector(EnemyPosition.X, EnemyPosition.Y, 0.0f);
-		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
-			return AvailableTiles[i]->GetMovementCost();
+		if (TilesArray[i]->GetActorLocation() == EnemyTilePosition)
+		{
+			return TilesArray[i]->GetMovementCost();
+		}
 	}
 	return -1;
 }

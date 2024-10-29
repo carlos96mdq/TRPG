@@ -30,7 +30,7 @@ public:
 	void UnitsStartTurn(EUnitControllerOwner ControllerOwner);
 	void UnitsEndTurn(EUnitControllerOwner ControllerOwner);
 
-	TArray<FVector> GetAllUnitLocations();
-	ABaseUnit* GetUnitByIndex(int32 Index);
+	TArray<FVector> GetAllUnitLocations();	// Only returns location for alive units
+	ABaseUnit* GetUnitByIndex(int32 Index);	// Only returns alive units
 	int32 GetUnitsNum() const;
 };

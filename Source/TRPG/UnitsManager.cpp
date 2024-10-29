@@ -32,7 +32,6 @@ void UUnitsManager::CreateNewUnit(FName Archetype, EUnitControllerOwner Controll
 	UnitsArray[NewUnitIndex]->FinishSpawning(Transform);
 
 	// Bind all the units delegate to this actor
-	//TODO because this is the online actor that should be bind to those delegates, convert them from multicast to onecast
 	//TODO maybe I should change all the array access [] UnitsArray[NewUnitIndex] for an unique access and a pointer
 	UnitsArray[NewUnitIndex]->OnUnitStopsMoving.AddUObject(this, &UUnitsManager::OnUnitStops);
 	UnitsArray[NewUnitIndex]->OnUnitStopsAction.AddUObject(this, &UUnitsManager::OnUnitStops);
@@ -104,12 +103,6 @@ void UUnitsManager::OnUnitStops(int32 UnitIndex)
             if (ATRPGPlayerState* MyPlayerState = Cast<ATRPGPlayerState>(PlayerState))
                 MyPlayerState->OnUnitUpdateStats(Unit);
         }
-        //TODO should see how to invoqe the correct function in the PlayerController or NpcController when needed
-        //if (PlayerUnitIndex == PlayerActiveUnitIndex)
-        //{
-        //    OnMoveAction();
-        //    HUDWidget->UpdateActiveUnitData(Unit);
-        //}
     }
 }
 
@@ -118,17 +111,25 @@ TArray<FVector> UUnitsManager::GetAllUnitLocations()
     TArray<FVector> Locations;
 
     for (ABaseUnit* Unit : UnitsArray)
-        Locations.Emplace(Unit->GetActorLocation());
-
+    {
+        if (Unit->IsAlive())
+        {
+            Locations.Emplace(Unit->GetActorLocation());
+        }
+    }
     return Locations;
 }
 
 ABaseUnit* UUnitsManager::GetUnitByIndex(int32 Index)
 {
-    if (Index >= 0 && Index < UnitsArray.Num())
+    if (Index >= 0 && Index < UnitsArray.Num() && UnitsArray[Index] && UnitsArray[Index]->IsAlive())
+    {
         return UnitsArray[Index];
+    }
     else
+    {
         return nullptr;
+    }
 }
 
 int32 UUnitsManager::GetUnitsNum() const
