@@ -46,7 +46,7 @@ public:
 	bool CheckAvailableTile(ABaseTile* TileNeeded);
 	
 	// Check if the tile receive is inside the selected ones
-	bool CheckAvailableTile(FVector EnemyPosition);
+	bool CheckAvailableTile(const FVector& EnemyPosition);
 
 	// Clean all the available tiles
 	void CleanAvailableTiles();

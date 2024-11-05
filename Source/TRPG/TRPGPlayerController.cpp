@@ -16,6 +16,8 @@
 #include "InputAction.h"
 #include "Camera/CameraActor.h" //TODO al mover a la mainCamera, mover este include con ella
 
+DEFINE_LOG_CATEGORY_STATIC(LogTRPGPlayerController, Log, All)
+
 ATRPGPlayerController::ATRPGPlayerController()
 {
     bShowMouseCursor = true;
@@ -81,7 +83,7 @@ void ATRPGPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    MainCamera = GetWorld()->SpawnActor<ACameraActor>(FVector(200.0f, 500.0f, 600.0f), FRotator(-60.0f, -45.0f, 0.0f));
+    MainCamera = GetWorld()->SpawnActor<ACameraActor>(FVector(300.0f, 1300.0f, 600.0f), FRotator(-60.0f, -45.0f, 0.0f));
 }
 
 void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
@@ -96,7 +98,7 @@ void ATRPGPlayerController::SetActiveUnit(ABaseUnit* NewActiveUnit)
     PlayerActiveUnitIndex = NewActiveUnit->GetUnitIndex();
     OnMoveAction();
 
-    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The unit %s was set as the Player's active unit"), *(NewActiveUnit->GetUnitName()).ToString());
+    UE_LOG(LogTRPGPlayerController, Display, TEXT("The unit %s was set as the Player's active unit"), *(NewActiveUnit->GetUnitName()).ToString());
 
     HUDWidget->UpdateActiveUnitData(NewActiveUnit);
 }
@@ -124,8 +126,8 @@ void ATRPGPlayerController::RegisterAllUnits()
 void ATRPGPlayerController::NewTurnStarts(EUnitControllerOwner ControllerTurn)
 {
     bIsPlayerTurn = ControllerTurn == ControllerOwnerName;
-    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] NewTurnStarts() with the bIsPlayerTurn of %s"), (bIsPlayerTurn ? TEXT("true") : TEXT("false")));
-    
+    UE_LOG(LogTRPGPlayerController, Display, TEXT("NewTurnStarts() with the bIsPlayerTurn of %s"), (bIsPlayerTurn ? TEXT("true") : TEXT("false")));
+
     HUDWidget->SetPlayerTurn(bIsPlayerTurn);
 
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
@@ -191,7 +193,7 @@ void ATRPGPlayerController::OnMouseRightClicked()
     if (!bIsPlayerTurn)
         return;
 
-    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] Right click pressed"));
+    UE_LOG(LogTRPGPlayerController, Display, TEXT("Right click pressed"));
 
     //Get actor hit
     FHitResult HitResult;
@@ -216,13 +218,13 @@ void ATRPGPlayerController::OnMouseRightClicked()
         }
         else if (ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
         {
-            UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The Active Unit is Ready to Combat"));
+            UE_LOG(LogTRPGPlayerController, Display, TEXT("The Active Unit is Ready to Combat"));
             if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
             {
-                UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] And another unit was clicked"));
+                UE_LOG(LogTRPGPlayerController, Display, TEXT("And another unit was clicked"));
                 if (GameState->GetTerrain()->CheckAvailableTile(HitUnit->GetActorLocation()))
                 {
-                    UE_LOG(LogTemp, Display, TEXT("[PLAYER CONTROLLER] The message to Try to Use the Current Action was send to the Active Unit"));
+                    UE_LOG(LogTRPGPlayerController, Display, TEXT("The message to Try to Use the Current Action was send to the Active Unit"));
                     ActiveUnit->TryUsingCurrentAction(HitUnit);
                     GameState->GetTerrain()->CleanAvailableTiles();
                     HUDWidget->UpdateActiveUnitData(ActiveUnit);
@@ -248,7 +250,7 @@ void ATRPGPlayerController::OnUnitStops(int32 PlayerUnitIndex)
 void ATRPGPlayerController::OnUnitUpdateStats(ABaseUnit* Unit)
 {
     HUDWidget->UpdateUnitData(Unit);
-    
+
     //TODO I should take into account the case where the Unit lose dies when attack (becauso of a defenders ability)
     if (Unit->GetUnitIndex() == PlayerActiveUnitIndex)
         HUDWidget->UpdateActiveUnitData(Unit);
@@ -269,7 +271,7 @@ void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)
 void ATRPGPlayerController::OnMoveAction()
 {
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
-    
+
     if (ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex))
     {
         ActiveUnit->SetUnitState(EUnitState::ReadyToMove);
@@ -293,19 +295,35 @@ void ATRPGPlayerController::OnRestartAction()
 
 void ATRPGPlayerController::OnMoveCameraAction(const FInputActionInstance& Instance)
 {
-    // Get the value of the Input Action for whatever type you want here...
+    // Get the value of the Input Action for whatever type you want here
     FVector2D MoveVector = Instance.GetValue().Get<FVector2D>();
 
     APawn* MyPawn = GetPawn();
-    check(MyPawn);
 
-    // Move the camera in the X direction
-    FVector DirectionVector = MyPawn->GetActorRightVector();
-    MyPawn->AddMovementInput(DirectionVector, MoveVector.X);
+    if (MyPawn)
+    {
+        FVector CameraLocation = MyPawn->GetActorLocation();
+        FVector DirectionVector = MyPawn->GetActorRightVector();
 
-    // Move camera in the Y direction
-    DirectionVector = DirectionVector.RotateAngleAxis(-90, FVector::UpVector);
-    MyPawn->AddMovementInput(DirectionVector, MoveVector.Y);
+        // Move the camera in the Horizontal axis
+        if (MoveVector.X <= -1 && CameraHMovement >= -CameraHMovementMax || MoveVector.X >= 1 && CameraHMovement <= CameraHMovementMax)
+        {
+            CameraHMovement += MoveVector.X;
+            MyPawn->AddMovementInput(DirectionVector, MoveVector.X);
+        }
+
+        // Move the camera in the Vertical axis
+        if (MoveVector.Y <= -1 && CameraVMovement >= -CameraVMovementMax || MoveVector.Y >= 1 && CameraVMovement <= CameraVMovementMax)
+        {
+            CameraVMovement += MoveVector.Y;
+            DirectionVector = DirectionVector.RotateAngleAxis(-90, FVector::UpVector);
+            MyPawn->AddMovementInput(DirectionVector, MoveVector.Y);
+        }        
+    }
+    else
+    {
+        UE_LOG(LogTRPGPlayerController, Display, TEXT("No pawn connected to the camera was found"));
+    }
 }
 
 void ATRPGPlayerController::OnZoomCameraAction(const FInputActionInstance& Instance)

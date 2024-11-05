@@ -28,6 +28,11 @@ class TRPG_API ATRPGPlayerController : public APlayerController
 
 	bool bIsPlayerTurn = false;
 
+	int32 CameraHMovement = 0;
+	int32 CameraHMovementMax = 100;
+	int32 CameraVMovement = 0;
+	int32 CameraVMovementMax = 100;
+
 	// Widget that show the data of the active unit widget
 	UActiveUnitWidget* ActiveUnitWidget;
 	

@@ -324,7 +324,7 @@ bool UTerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 		return true;
 }
 
-bool UTerrain::CheckAvailableTile(FVector TileLocation)
+bool UTerrain::CheckAvailableTile(const FVector& TileLocation)
 {
 	for (auto i = 0; i < AvailableTiles.Num(); i++)
 	{
@@ -338,6 +338,7 @@ bool UTerrain::CheckAvailableTile(FVector TileLocation)
 void UTerrain::CleanAvailableTiles()
 {
 	CleanTiles(AvailableTiles);
+	AvailableTiles.Empty();
 }
 
 void UTerrain::CleanTiles(const TArray<ABaseTile*>& TilesToClean)
@@ -346,10 +347,6 @@ void UTerrain::CleanTiles(const TArray<ABaseTile*>& TilesToClean)
 	{
 		Tile->SetGlowingEffect(false);
 		Tile->SetMovementCost(-1);
-	}
-	if (AvailableTiles == TilesToClean)
-	{
-		AvailableTiles.Empty();
 	}
 }
 
