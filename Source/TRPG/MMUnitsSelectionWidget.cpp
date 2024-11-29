@@ -24,10 +24,9 @@ void UMMUnitsSelectionWidget::NativeConstruct()
 	ButtonUnit1->OnIndexButtonClicked.AddUObject(this, &UMMUnitsSelectionWidget::SelectUnit);
 	ButtonUnit2->OnIndexButtonClicked.AddUObject(this, &UMMUnitsSelectionWidget::SelectUnit);
 
-	GetOwningPlayer<AMMPlayerController>()->GetPlayerState<AMMPlayerState>()->OnSelectableUnitsGet.AddUObject(this, &UMMUnitsSelectionWidget::SetSelectableUnits);
+	SetSelectableUnits();
 }
 
-//TODO puede que lo mejor sea setearlo con multiples parametros, o mandarle el array con los FName, pero me parecio mejor esta conversacion de ida y vuelta
 void UMMUnitsSelectionWidget::SetSelectableUnits()
 {
 	// If the widget is hidden, show it

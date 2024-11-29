@@ -24,7 +24,7 @@ protected:
 	virtual void BeginPlay() override;
 
 	// PlayerHUD widget
-	UMMHUDWidget* HUDWidget;
+	TObjectPtr<UMMHUDWidget> HUDWidget;
 
 public:
 	// Hud Widget to Spawn in world

@@ -39,6 +39,4 @@ void UMMHUDWidget::SetPlayerMatchesRecordData(const TArray<int32>& PlayerMatches
 		UnitsDefeatedValue->SetText(FText::AsNumber(PlayerMatchesRecordData[3]));
 		UnitsLostValue->SetText(FText::AsNumber(PlayerMatchesRecordData[4]));
 	}
-
-	
 }

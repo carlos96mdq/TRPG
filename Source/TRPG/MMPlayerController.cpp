@@ -20,12 +20,11 @@ void AMMPlayerController::SetupInputComponent()
 void AMMPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-    HUDWidget = CreateWidget<UMMHUDWidget>(this, HUDWidgetClass);
-    check(HUDWidget);
-    HUDWidget->AddToViewport();
 }
 
 void AMMPlayerController::ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData)
 {
+    HUDWidget = CreateWidget<UMMHUDWidget>(this, HUDWidgetClass);
+    HUDWidget->AddToViewport();
     HUDWidget->SetPlayerMatchesRecordData(PlayerMatchesRecordData);
 }
