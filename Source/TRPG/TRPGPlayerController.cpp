@@ -303,22 +303,24 @@ void ATRPGPlayerController::OnMoveCameraAction(const FInputActionInstance& Insta
     if (MyPawn)
     {
         FVector CameraLocation = MyPawn->GetActorLocation();
-        FVector DirectionVector = MyPawn->GetActorRightVector();
 
-        // Move the camera in the Horizontal axis
-        if (MoveVector.X <= -1 && CameraHMovement >= -CameraHMovementMax || MoveVector.X >= 1 && CameraHMovement <= CameraHMovementMax)
+        // Check for movement limits
+        if (MoveVector.X <= -1 && CameraHMovement < -CameraHMovementMax || MoveVector.X >= 1 && CameraHMovement > CameraHMovementMax)
         {
-            CameraHMovement += MoveVector.X;
-            MyPawn->AddMovementInput(DirectionVector, MoveVector.X);
+            MoveVector.X = 0;
         }
-
-        // Move the camera in the Vertical axis
-        if (MoveVector.Y <= -1 && CameraVMovement >= -CameraVMovementMax || MoveVector.Y >= 1 && CameraVMovement <= CameraVMovementMax)
+        if (MoveVector.Y <= -1 && CameraVMovement < -CameraVMovementMax || MoveVector.Y >= 1 && CameraVMovement > CameraVMovementMax)
         {
-            CameraVMovement += MoveVector.Y;
-            DirectionVector = DirectionVector.RotateAngleAxis(-90, FVector::UpVector);
-            MyPawn->AddMovementInput(DirectionVector, MoveVector.Y);
-        }        
+            MoveVector.Y = 0;
+        }  
+
+        CameraHMovement += MoveVector.X;
+        CameraVMovement += MoveVector.Y;
+
+        // Move Camera
+        int32 SpeedFactor = 8;
+        FVector DirectionVector = MyPawn->GetActorRightVector();
+        MyPawn->SetActorLocation(CameraLocation + DirectionVector * MoveVector.X * SpeedFactor + DirectionVector.RotateAngleAxis(-90, FVector::UpVector) * MoveVector.Y * SpeedFactor);
     }
     else
     {
