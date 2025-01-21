@@ -9,8 +9,33 @@
 #include "TRPGPlayerState.h"
 #include "TRPGGameInstanceSubsystem.h"
 
+DEFINE_LOG_CATEGORY_STATIC(LogTRPGGameState, Log, All)
+
 ATRPGGameStateBase::ATRPGGameStateBase()
 {
+	// TODO Only for building purpose, this array is going to be hardcoded instead of being filled from a Data Table
+	DamageTypeModifiers = {
+		//None  Bug  Dark  Drag  Elec  Fairy Fight Fire  Fly   Ghost Grass Grou  Norm  Ice   Pois  Psych Rock  Steel Water 
+		{ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },	// None
+		{ 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 0.5f, 0.5f, 2.0f, 1.0f, 1.0f, 1.0f, 0.5f, 2.0f, 1.0f, 0.5f, 1.0f },	// Bug
+		{ 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 0.5f, 0.5f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f },	// Dark
+		{ 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 1.0f },	// Dragon
+		{ 1.0f, 1.0f, 1.0f, 0.5f, 0.5f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f },	// Electric
+		{ 1.0f, 1.0f, 2.0f, 2.0f, 1.0f, 1.0f, 2.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 0.5f, 1.0f },	// Fairy
+		{ 1.0f, 0.5f, 2.0f, 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 0.5f, 0.0f, 1.0f, 1.0f, 2.0f, 2.0f, 0.5f, 0.5f, 2.0f, 2.0f, 1.0f },	// Fighting
+		{ 1.0f, 2.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 0.5f, 2.0f, 0.5f },	// Fire
+		{ 1.0f, 2.0f, 1.0f, 1.0f, 0.5f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 0.5f, 1.0f },	// Flying
+		{ 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f },	// Ghost
+		{ 1.0f, 0.5f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.5f, 0.5f, 1.0f, 0.5f, 2.0f, 1.0f, 1.0f, 0.5f, 1.0f, 2.0f, 0.5f, 2.0f },	// Grass
+		{ 1.0f, 0.5f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 2.0f, 0.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 2.0f, 2.0f, 1.0f },	// Ground
+		{ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 0.5f, 1.0f },	// Normal
+		{ 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 0.5f, 2.0f, 1.0f, 2.0f, 2.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 0.5f, 0.5f },	// Ice
+		{ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 0.5f, 2.0f, 0.5f, 1.0f, 1.0f, 0.5f, 1.0f, 0.5f, 0.0f, 1.0f },	// Poison
+		{ 1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 0.5f, 1.0f, 0.5f, 1.0f },	// Psychic
+		{ 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 2.0f, 2.0f, 1.0f, 1.0f, 0.5f, 1.0f, 2.0f, 1.0f, 1.0f, 1.0f, 0.5f, 1.0f },	// Rock
+		{ 1.0f, 1.0f, 1.0f, 1.0f, 0.5f, 2.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 2.0f, 0.5f, 0.5f },	// Steel
+		{ 1.0f, 1.0f, 1.0f, 0.5f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 1.0f, 0.5f, 2.0f, 1.0f, 1.0f, 1.0f, 1.0f, 2.0f, 1.0f, 0.5f }	// Water
+	};
 }
 
 // Called when the game starts or when spawned
@@ -28,20 +53,33 @@ void ATRPGGameStateBase::BeginPlay()
 	//FName SelectedUnitName = FName("Bulbasaur");	//TODO eliminar esto y dejar el de abajo
 	FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
 
-	// Load the Damage Type Modifiers datatable in a local array
-	check(DamageTypeModifiersTable);
-	TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
-	TArray<float> InitializationArray;
-	InitializationArray.Init(1, (int32)EUnitType::MAX);
-	DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
+	//TODO For now the creation of the Type array from a Data Table was changed for a hardcoded TArray until a better and optimal way is found
+	//// Load the Damage Type Modifiers datatable in a local array
+	//if (DamageTypeModifiersTable != nullptr)
+	//{
+	//	TArray<FDamageTypeModifiers*> AttackerTypesRows;
+	//	DamageTypeModifiersTable->GetAllRows<FDamageTypeModifiers>("", AttackerTypesRows);
+	//	
+	//	
+	//	
+	//	
+	//	TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
+	//	TArray<float> InitializationArray;
+	//	InitializationArray.Init(1, (int32)EUnitType::MAX);
+	//	DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
 
-	for (int32 Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
-	{
-		for (int32 Defender = 1; Defender < WARDTArray.Num(); Defender++)
-		{
-			DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
-		}
-	}
+	//	for (int32 Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
+	//	{
+	//		for (int32 Defender = 1; Defender < WARDTArray.Num(); Defender++)
+	//		{
+	//			DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
+	//		}
+	//	}
+	//}
+	//else
+	//{
+	//	UE_LOG(LogGameState, Warning, TEXT("The Damage Type Modifiers Table wasn't found"));
+	//}
 
 	Terrain->CreateMap();
 
@@ -71,7 +109,7 @@ void ATRPGGameStateBase::StartGame()
 	// And the game always starts with the player turn
 	ControllerTurn = EUnitControllerOwner::Player1;
 	
-	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from StartGame()"));
+	UE_LOG(LogGameState, Display, TEXT("OnNewTurnStarts Broadcast from StartGame()"));
 	OnNewTurnStarts.Broadcast(ControllerTurn);
 }
 
@@ -82,18 +120,18 @@ void ATRPGGameStateBase::SetNextTurn()
 	// Set the next Player. In this case, the turn rotates between the player and the NpcController.
 	if (ControllerTurn == EUnitControllerOwner::Player1)
 	{
-		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The AI's turn starts"));
+		UE_LOG(LogGameState, Display, TEXT("The AI's turn starts"));
 		ControllerTurn = EUnitControllerOwner::AI1;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] The Player's turn starts"));
+		UE_LOG(LogGameState, Display, TEXT("The Player's turn starts"));
 		ControllerTurn = EUnitControllerOwner::Player1;
 	}
-		
+
 	UnitsManager->UnitsStartTurn(ControllerTurn);
-	
-	UE_LOG(LogTemp, Display, TEXT("[GAME STATE] OnNewTurnStarts Broadcast from SetNextTurn()"));
+
+	UE_LOG(LogGameState, Display, TEXT("OnNewTurnStarts Broadcast from SetNextTurn()"));
 	OnNewTurnStarts.Broadcast(ControllerTurn);
 }
 
@@ -104,12 +142,12 @@ void ATRPGGameStateBase::ControllerLostGame(EUnitControllerOwner ControllerOwner
 
 	if (ControllerOwner == EUnitControllerOwner::AI1)
 	{
-		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Won"));
+		UE_LOG(LogGameState, Display, TEXT("Player Won"));
 		WinnerController = EUnitControllerOwner::Player1;
 	}
-	else if(ControllerOwner == EUnitControllerOwner::Player1)
+	else if (ControllerOwner == EUnitControllerOwner::Player1)
 	{
-		UE_LOG(LogTemp, Display, TEXT("[GAME STATE] Player Lost"));
+		UE_LOG(LogGameState, Display, TEXT("Player Lost"));
 		WinnerController = EUnitControllerOwner::AI1;
 	}
 

@@ -114,12 +114,14 @@ class TRPG_API ATRPGGameStateBase : public AGameStateBase
 	// Unit whose turn is the current one
 	int32 ActiveUnitIndex = -1;
 
+	UPROPERTY(EditAnywhere)
+	UDataTable* DamageTypeModifiersTable;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	UDataTable* DamageTypeModifiersTable;
+
 
 public:
 
