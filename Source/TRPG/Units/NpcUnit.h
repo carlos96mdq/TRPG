@@ -33,8 +33,6 @@ class TRPG_API ANpcUnit : public ABaseUnit
 public:
 
 	void TurnStarts() override;
-	void TestFunction();
-
 
 	void SetAiState(EAiState NewState);
 	void SetCurrentObjective(ABaseUnit* NewObjective);

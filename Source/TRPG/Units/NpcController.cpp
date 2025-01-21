@@ -110,7 +110,9 @@ void ANpcController::CheckForNextAction()
                     }
 
                     if (ObjectiveUnit)
+                    {
                         UE_LOG(LogNpcController, Display, TEXT("The npc %s found a valid Objective with name %s"), *(NpcUnit->GetUnitName()).ToString(), *(ObjectiveUnit->GetUnitName()).ToString());
+                    }
 
                     NpcUnit->SetCurrentObjective(ObjectiveUnit);
                 }
@@ -211,6 +213,8 @@ void ANpcController::OnUnitUpdateStats(int32 UnitIndex)
         }
 
         if (bAllUnitsAreDead)
+        {
             GameState->ControllerLostGame(ControllerOwnerName);
+        }
     }
 }

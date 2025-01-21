@@ -281,10 +281,6 @@ void UTerrain::SetAvailableTiles(ABaseUnit* ActiveUnit, bool bShowTiles)
 				//DrawDebugCylinder(GetWorld(), UnitLocation, Destination, 1.0f, 5, FColor::Red, true, 10.0f);
 				AvailableTiles.RemoveAtSwap(i);
 			}
-			else
-			{
-				//DrawDebugCylinder(GetWorld(), UnitLocation, Destination, 1.0f, 5, FColor::Green, true, 10.0f);
-			}
 		}
 	}
 	
@@ -319,9 +315,13 @@ bool UTerrain::CheckAvailableTile(ABaseTile* TileNeeded)
 	int32 TileIdx = AvailableTiles.Find(TileNeeded);
 
 	if (TileIdx == INDEX_NONE)
+	{
 		return false;
+	}
 	else
+	{
 		return true;
+	}
 }
 
 bool UTerrain::CheckAvailableTile(const FVector& TileLocation)
@@ -330,7 +330,9 @@ bool UTerrain::CheckAvailableTile(const FVector& TileLocation)
 	{
 		FVector EnemyTilePosition = FVector(TileLocation.X, TileLocation.Y, 0.0f);
 		if (AvailableTiles[i]->GetActorLocation() == EnemyTilePosition)
+		{
 			return true;
+		}
 	}
 	return false;
 }

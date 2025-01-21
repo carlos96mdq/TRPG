@@ -62,7 +62,9 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 	LabelEnergy->SetText(FText::AsNumber(ActiveUnit->GetEnergy()));
 
 	if (GetVisibility() != ESlateVisibility::Visible)
+	{
 		SetVisibility(ESlateVisibility::Visible);
+	}
 
 	if (ActiveUnit->GetUnitState() == EUnitState::Moving || ActiveUnit->GetUnitState() == EUnitState::Combating)
 	{
@@ -70,19 +72,24 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 		ButtonEndTurn->SetIsEnabled(false);
 
 		for (UButton* Button : CombatButtons)
+		{
 			Button->SetIsEnabled(false);
+		}
 	}
 	else
 	{
 		int32 UnitEnergy = ActiveUnit->GetEnergy();
 
 		ButtonEndTurn->SetIsEnabled(true);
-		//TODO tambien antes que otra cosa se deberian setear todas las imagenes
 
 		if (UnitEnergy <= 0)
+		{
 			ButtonMove->SetIsEnabled(false);
+		}
 		else
+		{
 			ButtonMove->SetIsEnabled(true);
+		}
 
 		for (int32 i = 0; i < CombatButtons.Num(); i++)
 		{
@@ -98,12 +105,6 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 
 void UActiveUnitWidget::ChangeButtonsState(EUnitState NewState)
 {	
-	//TODO deberia agarrar los botones y agregarlos en run time de igual manera que agrego los UnitDataIcon
-	if (NewState == EUnitState::Idle || NewState == EUnitState::ReadyToMove || NewState == EUnitState::ReadyToCombat)
-	{
-
-	}
-
 	// Disable buttons according to state
 	switch (NewState)
 	{

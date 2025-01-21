@@ -168,7 +168,9 @@ void ATRPGPlayerController::GameOver(EUnitControllerOwner WinnerController)
 void ATRPGPlayerController::OnMouseLeftClicked()
 {
     if (!bIsPlayerTurn)
+    {
         return;
+    }
 
     ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
     ABaseUnit* ActiveUnit = GameState->GetUnitByIndex(PlayerActiveUnitIndex);
@@ -183,7 +185,9 @@ void ATRPGPlayerController::OnMouseLeftClicked()
         if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
         {
             if (HitUnit->GetControllerOwner() == ControllerOwnerName && HitUnit->GetUnitIndex() != PlayerActiveUnitIndex)
+            {
                 SetActiveUnit(HitUnit);
+            }
         }
     }
 }
@@ -191,7 +195,9 @@ void ATRPGPlayerController::OnMouseLeftClicked()
 void ATRPGPlayerController::OnMouseRightClicked()
 {
     if (!bIsPlayerTurn)
+    {
         return;
+    }
 
     UE_LOG(LogTRPGPlayerController, Display, TEXT("Right click pressed"));
 
@@ -253,7 +259,9 @@ void ATRPGPlayerController::OnUnitUpdateStats(ABaseUnit* Unit)
 
     //TODO I should take into account the case where the Unit lose dies when attack (becauso of a defenders ability)
     if (Unit->GetUnitIndex() == PlayerActiveUnitIndex)
+    {
         HUDWidget->UpdateActiveUnitData(Unit);
+    }
 }
 
 void ATRPGPlayerController::OnCombatAction(int32 ActionPosition)

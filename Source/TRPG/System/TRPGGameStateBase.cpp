@@ -50,36 +50,7 @@ void ATRPGGameStateBase::BeginPlay()
 	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
 
 	// Get Unit selected by Player in MainMenu
-	//FName SelectedUnitName = FName("Bulbasaur");	//TODO eliminar esto y dejar el de abajo
 	FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
-
-	//TODO For now the creation of the Type array from a Data Table was changed for a hardcoded TArray until a better and optimal way is found
-	//// Load the Damage Type Modifiers datatable in a local array
-	//if (DamageTypeModifiersTable != nullptr)
-	//{
-	//	TArray<FDamageTypeModifiers*> AttackerTypesRows;
-	//	DamageTypeModifiersTable->GetAllRows<FDamageTypeModifiers>("", AttackerTypesRows);
-	//	
-	//	
-	//	
-	//	
-	//	TArray<TArray<FString>> WARDTArray = DamageTypeModifiersTable->GetTableData();
-	//	TArray<float> InitializationArray;
-	//	InitializationArray.Init(1, (int32)EUnitType::MAX);
-	//	DamageTypeModifiers.Init(InitializationArray, (int32)EUnitType::MAX);
-
-	//	for (int32 Attacker = 1; Attacker < WARDTArray.Num(); Attacker++)
-	//	{
-	//		for (int32 Defender = 1; Defender < WARDTArray.Num(); Defender++)
-	//		{
-	//			DamageTypeModifiers[Attacker][Defender] = FCString::Atof(*(WARDTArray[Attacker][Defender]));
-	//		}
-	//	}
-	//}
-	//else
-	//{
-	//	UE_LOG(LogGameState, Warning, TEXT("The Damage Type Modifiers Table wasn't found"));
-	//}
 
 	Terrain->CreateMap();
 

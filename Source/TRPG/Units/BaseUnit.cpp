@@ -73,13 +73,10 @@ void ABaseUnit::BeginPlay()
 	Model3DComponent->SetSkeletalMesh(Model3D);
 	
 	// Set Animator from datatable
-	//Model3DComponent->SetAnimClass(Animation);
 	if (AnimationBP)
 	{
 		Model3DComponent->SetAnimClass(AnimationBP->GeneratedClass);
 	}
-	//Model3DComponent->SetAnimClass(AnimationBP->GetClass());
-	//Model3DComponent->SetAnimInstance(Animation);
 }
 
 void ABaseUnit::TurnStarts()
@@ -204,9 +201,13 @@ void ABaseUnit::AddCombatAction(FName ActionName)
 	FCombatActions* CombatAction = CombatActionsTable->FindRow<FCombatActions>(ActionName, "", true);
 
 	if (CombatAction)
+	{
 		CombatActions.Add(CombatAction);
+	}
 	else
+	{
 		UE_LOG(LogTemp, Warning, TEXT("[UNIT STARTS] The Unit is trying to add a Combat Action that doesn't exist in data tables"));
+	}
 }
 
 void ABaseUnit::SetCombatAction(int32 ActionIdx)
@@ -217,7 +218,9 @@ void ABaseUnit::SetCombatAction(int32 ActionIdx)
 		check(CurrentCombatAction);
 	}
 	else
+	{
 		UE_LOG(LogTemp, Warning, TEXT("[COMBAT] The Unit is trying to use a Combat Action that doesn't have"));
+	}
 }
 
 bool ABaseUnit::TryUsingCurrentAction(ABaseUnit* Objective)
@@ -253,9 +256,13 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 
 	// If it is a critic it allways hit, don't matter the objective DoggingChance 
 	if (HitChanceDie <= CriticThreshold)
+	{
 		IsCritic = true;
+	}
 	else if (HitChanceDie <= HitThreshold)
+	{
 		IsSuccess = true;
+	}
 
 	// The action passed the accuracy check, so continue
 	if (IsSuccess || IsCritic)
@@ -283,7 +290,9 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 			}
 
 			if (IsCritic)
+			{
 				Damage = FMath::Floor(Damage * 1.5);
+			}
 
 			UE_LOG(LogTemp, Display, TEXT("[COMBAT] It was an Attack with a total damage of %d"), Damage);
 
@@ -316,7 +325,9 @@ void ABaseUnit::UseCurrentAction(ABaseUnit* Objective)
 				int32 ChanceDie = FMath::RandRange(1, 100);
 
 				if (ChanceDie <= Chance)
+				{
 					EffectObjective->ApplyEffect(Effect);
+				}
 			}
 		}
 	}
@@ -339,9 +350,13 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 	Armor -= Damage;
 
 	if (Armor < 0)
+	{
 		Armor = 0;
+	}
 	if (FinalDamage < 0)
+	{
 		FinalDamage = 0;
+	}
 	UE_LOG(LogTemp, Display, TEXT("[COMBAT] After processing the armor, this unit get a Final Damage of: %d, and has an Armor of: %d"), FinalDamage, Armor);
 
 	// Apply only non-negative Damage
@@ -350,7 +365,9 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 		FinalDamage *= GetDamageTypeModifier(DamageType);
 		FinalDamage = (int32)floorf(FinalDamage);
 		if (FinalDamage == 0)
+		{
 			FinalDamage = 1;
+		}
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] After getting the damage type modifier, this unit get a Final Damage of: %d"), FinalDamage);
 
 		Health = Health - FinalDamage;
@@ -359,10 +376,14 @@ void ABaseUnit::ApplyDamage(int32 Damage, EUnitType DamageType)
 
 		// If this unit Health reaches 0, kill this unit
 		if (Health <= 0)
+		{
 			UnitDies();
+		}
 	}
 	else
+	{
 		UE_LOG(LogTemp, Display, TEXT("[COMBAT] The Final Damage wasn't enought to damage this unit"));
+	}
 
 	// This event is called to update any visual interface that need to change the units stats
 	OnUnitUpdateStats.ExecuteIfBound(UnitIndex);
@@ -403,9 +424,13 @@ void ABaseUnit::SetUnitState(EUnitState NewState)
 bool ABaseUnit::HasActionEquipped(int32 CombatActionIndex) const
 {
 	if (CombatActionIndex >= 0 && CombatActionIndex < CombatActions.Num())
+	{
 		return true;
+	}
 	else
+	{
 		return false;
+	}
 }
 
 int32 ABaseUnit::GetCombatActionEnergyCost(int32 ActionIdx) const
@@ -434,34 +459,6 @@ int32 ABaseUnit::GetUnitStat(EUnitStats Stat) const
 	// Add modifier value from stats effects
 	check((uint8)Stat < StatsEffects.Num());
 	StatValue += StatsEffects[(uint8)Stat];
-
-	// Add values coming from unit pasives
-	//for (FName PassiveName : KnownPassives)
-	//{
-	//	FPassives* Passive = PassivesTable->FindRow<FPassives>(PassiveName, "", true);
-	//	check(Passive);
-
-	//	if (Passive->Type == EPassiveType::Start)
-	//	{
-	//		for (const FEffects& Effect : Passive->Effects)
-	//		{
-	//			// Check only for effects that apply to this stat. As Start Stats Passives are initialized allways, ignore the probability check
-	//			if (Effect.Type == EEffectName::Stats && Effect.SubType == (uint8)Stat && (Effect.Objective == EObjectiveType::User || Effect.Objective == EObjectiveType::Allies))
-	//			{
-	//				if (Effect.IsValuePercent)
-	//				{
-	//					StatValue = FMath::Floor(StatValue * (1 + Effect.Value / 100));
-	//				}
-	//				else
-	//				{
-	//					StatValue += Effect.Value;
-	//				}
-	//			}
-	//		}
-	//	}
-	//}
-
-
 
 	return StatValue;
 }

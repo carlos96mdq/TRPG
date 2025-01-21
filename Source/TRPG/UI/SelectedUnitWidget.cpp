@@ -18,7 +18,6 @@ void USelectedUnitWidget::NativeConstruct()
 void USelectedUnitWidget::SetUnitData(ABaseUnit* SelectedUnit)
 {
 	// Get Active Unit and set widget data
-	//if (ABaseUnit* SelectedUnit = GetOwningPlayerState<ATRPGPlayerState>()->GetSelectedUnit())
 	if (SelectedUnit)
 	{
 		LabelName->SetText(FText::FromName(SelectedUnit->GetUnitName()));

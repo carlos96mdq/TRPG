@@ -29,7 +29,9 @@ void ATRPGPlayerState::OnUnitUpdateStats(ABaseUnit* Unit)
 	if (ATRPGPlayerController* MyPlayerController = Cast<ATRPGPlayerController>(GetPlayerController()))
 	{
 		if (!Unit->IsAlive())
+		{
 			AddUnitDefeatedToResults(Unit->GetControllerOwner() == MyPlayerController->GetControllerName());
+		}
 		
 		MyPlayerController->OnUnitUpdateStats(Unit);
 	}
@@ -38,18 +40,26 @@ void ATRPGPlayerState::OnUnitUpdateStats(ABaseUnit* Unit)
 void ATRPGPlayerState::AddUnitDefeatedToResults(bool PlayerIsOwner)
 {
 	if (PlayerIsOwner)
+	{
 		DataToSave.UnitsLost++;
+	}
 	else
+	{
 		DataToSave.UnitsDefeated++;
+	}
 }
 
 void ATRPGPlayerState::AddMatchFinishedToResults(bool PlayerWon)
 {
 	DataToSave.MatchesPlayed++;
 	if (PlayerWon)
+	{
 		DataToSave.MatchesWon++;
+	}
 	else
+	{
 		DataToSave.MatchesLost++;
+	}
 }
 
 void ATRPGPlayerState::SavePlayerResults()
@@ -88,9 +98,10 @@ void ATRPGPlayerState::SetActiveUnit(ABaseUnit* NewActiveUnit)
 void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 {
 	// If there is not yet an active unit, it means the the game has nor started yet
-	// TODO: deberia agregar en esta parte el chequeo de que la ActiveUnit sea una Unit del Player, sino tampoco hace nada
 	if (ActiveUnit == nullptr)
+	{
 		return;
+	}
 
 	// First depending if a unit is selected what happens
 	if (ActiveUnit->GetUnitState() == EUnitState::ReadyToMove || ActiveUnit->GetUnitState() == EUnitState::ReadyToCombat)
@@ -123,9 +134,6 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 					ActiveUnit->SetUnitState(EUnitState::Idle);
 				}
 			}
-			else if (ABaseTile* HitTile = Cast<ABaseTile>(HitResult.GetActor()))
-			{
-			}
 			break;
 		default:
 			break;
@@ -137,12 +145,8 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 		// If hit a unit, take it as the selected one and let it know to all binded actors
 		if (ABaseUnit* HitUnit = Cast<ABaseUnit>(HitResult.GetActor()))
 		{
-			// TODO: Chequear que la unidad seleccionada no sea la ActiveUnit
-			//if (HitUnit->GetUnitState() == UnitState::Idle)
-			//{
-				SelectedUnit = HitUnit;
-				OnUnitSelected.Broadcast(SelectedUnit);
-			//}
+			SelectedUnit = HitUnit;
+			OnUnitSelected.Broadcast(SelectedUnit);
 		}
 		else
 		{
@@ -170,7 +174,9 @@ void ATRPGPlayerState::ChangeState(EUnitState NewState, int32 ActionPosition)
 {
 	// If there is not yet an active unit, it means the the game has nor started yet
 	if (ActiveUnit == nullptr)
+	{
 		return;
+	}
 
 	// Change the CurrentState and reflects it ingame
 	switch (NewState)

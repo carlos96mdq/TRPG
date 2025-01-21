@@ -31,7 +31,9 @@ void UMMUnitsSelectionWidget::SetSelectableUnits()
 {
 	// If the widget is hidden, show it
 	if (GetVisibility() != ESlateVisibility::Visible)
+	{
 		SetVisibility(ESlateVisibility::Visible);
+	}
 
 	AMMPlayerState* MyPlayerState = GetOwningPlayer<AMMPlayerController>()->GetPlayerState<AMMPlayerState>();
 	check(MyPlayerState);

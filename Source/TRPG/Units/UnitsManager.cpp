@@ -43,7 +43,9 @@ void UUnitsManager::UnitsStartTurn(EUnitControllerOwner ControllerOwner)
     for (ABaseUnit* Unit : UnitsArray)
     {
         if ((ControllerOwner == EUnitControllerOwner::None || Unit->GetControllerOwner() == ControllerOwner) && Unit->IsAlive())
+        {
             Unit->TurnStarts();
+        }
     }
 }
 
@@ -52,7 +54,9 @@ void UUnitsManager::UnitsEndTurn(EUnitControllerOwner ControllerOwner)
     for (ABaseUnit* Unit : UnitsArray)
     {
         if ((ControllerOwner == EUnitControllerOwner::None || Unit->GetControllerOwner() == ControllerOwner) && Unit->IsAlive())
+        {
             Unit->TurnEnds();
+        }
     }
 }
 
@@ -66,7 +70,9 @@ void UUnitsManager::OnUnitUpdateStats(int32 UnitIndex)
         for (APlayerState* PlayerState : GameState->PlayerArray)
         {
             if (ATRPGPlayerState* MyPlayerState = Cast<ATRPGPlayerState>(PlayerState))
+            {
                 MyPlayerState->OnUnitUpdateStats(Unit);
+            }
         }
 
         if (!Unit->IsAlive())
@@ -84,7 +90,9 @@ void UUnitsManager::OnUnitUpdateStats(int32 UnitIndex)
             }
 
             if (bAllPlayersAreDead)
+            {
                 GameState->ControllerLostGame(ControllerOwner);
+            }
         }
     }
     else
@@ -101,7 +109,9 @@ void UUnitsManager::OnUnitStops(int32 UnitIndex)
         for (APlayerState* PlayerState : GameState->PlayerArray)
         {
             if (ATRPGPlayerState* MyPlayerState = Cast<ATRPGPlayerState>(PlayerState))
+            {
                 MyPlayerState->OnUnitUpdateStats(Unit);
+            }
         }
     }
 }

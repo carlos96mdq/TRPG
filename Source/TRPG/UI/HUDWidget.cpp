@@ -48,9 +48,13 @@ void UHUDWidget::RestartPressed()
 void UHUDWidget::SetPlayerTurn(bool bIsPlayerTurn)
 {
 	if (bIsPlayerTurn)
+	{
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Visible);
+	}
 	else
+	{
 		ActiveUnitWidget->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool bBelongsToPlayer)
@@ -62,9 +66,13 @@ void UHUDWidget::CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDa
 	UUnitDataIcon* DataIcon = DataIconList.Emplace(UnitIndex, CreateWidget<UUnitDataIcon>(this, UnitDataIconClass));
 	
 	if (bBelongsToPlayer)
+	{ 
 		PlayerUnits->AddChild(DataIcon);
+	}
 	else
+	{
 		EnemyUnits->AddChild(DataIcon);
+	}
 
 	DataIcon->SetData(FUnitDataParams(Unit->GetIcon(), Unit->GetArmor(), Unit->GetLife(), Unit->GetEnergy()));
 }
@@ -85,7 +93,9 @@ void UHUDWidget::UpdateUnitData(ABaseUnit* Unit)
 			// This use a placeholder just for reference. In the future a more generic method to get customizable images should be implemented
 			UTexture2D* DefeatTexture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/TRPG/Textures2D/IconDefeat.IconDefeat"));
 			if (DefeatTexture)
+			{
 				UnitDataIcon->SetData(FUnitDataParams(DefeatTexture, 0, 0, 0));
+			}
 		}
 	}
 }
@@ -100,9 +110,13 @@ void UHUDWidget::GameOver(bool bPlayerWon)
 	FText CustomText;
 
 	if (bPlayerWon)
+	{
 		CustomText = FText::FromString("You Win!");
+	}
 	else
+	{
 		CustomText = FText::FromString("You Lose!");
+	}
 
 	// To test other way, I created a function in blueprint and in this code we access that function
 	FName FunctionName(TEXT("SetGameOverText"));
