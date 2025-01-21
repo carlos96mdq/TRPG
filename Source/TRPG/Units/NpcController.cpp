@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "NpcController.h"
-#include "TRPGGameStateBase.h"
-#include "Terrain.h"
-#include "NpcUnit.h"
+#include "Units/NpcController.h"
+#include "System/TRPGGameStateBase.h"
+#include "Units/Terrain.h"
+#include "Units/NpcUnit.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogNpcController, Log, All)
 

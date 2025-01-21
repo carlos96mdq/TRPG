@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UnitModel.h"
+#include "Units/UnitModel.h"
 
 // Sets default values
 AUnitModel::AUnitModel()

@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "UnitsManager.h"
-#include "TRPGGameStateBase.h"
-#include "TRPGPlayerState.h"
-#include "BaseUnit.h"
-#include "NpcUnit.h"
+#include "Units/UnitsManager.h"
+#include "System/TRPGGameStateBase.h"
+#include "System/TRPGPlayerState.h"
+#include "Units/BaseUnit.h"
+#include "Units/NpcUnit.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogUnitsManager, Log, All)
 

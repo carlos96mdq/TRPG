@@ -1,10 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "TRPGGameModeBase.h"
-#include "TRPGPlayerController.h"
-#include "TRPGGameStateBase.h"
-#include "TRPGPlayerState.h"
+#include "System/TRPGGameModeBase.h"
+#include "System/TRPGPlayerController.h"
+#include "System/TRPGGameStateBase.h"
+#include "System/TRPGPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 
 ATRPGGameModeBase::ATRPGGameModeBase(const FObjectInitializer& ObjectInitializer)

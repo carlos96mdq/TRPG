@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MMUnitsSelectionWidget.h"
-#include "MMPlayerController.h"
-#include "MMPlayerState.h"
+#include "UI/MMUnitsSelectionWidget.h"
+#include "System/MMPlayerController.h"
+#include "System/MMPlayerState.h"
 #include "Components/Image.h"
 #include "Components/Button.h"
-#include "IndexButton.h"
+#include "UI/IndexButton.h"
 
 void UMMUnitsSelectionWidget::NativeConstruct()
 {

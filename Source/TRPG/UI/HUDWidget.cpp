@@ -1,18 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HUDWidget.h"
+#include "UI/HUDWidget.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/Overlay.h"
 #include "Components/VerticalBox.h"
 #include "Components/TextBlock.h"
-#include "TRPGGameStateBase.h"
-#include "TRPGPlayerController.h"
-#include "ActiveUnitWidget.h"
-#include "SelectedUnitWidget.h"
-#include "UnitDataIcon.h"
-#include "BaseUnit.h"
+#include "System/TRPGGameStateBase.h"
+#include "System/TRPGPlayerController.h"
+#include "UI/ActiveUnitWidget.h"
+#include "UI/SelectedUnitWidget.h"
+#include "UI/UnitDataIcon.h"
+#include "Units/BaseUnit.h"
 
 void UHUDWidget::NativeConstruct()
 {

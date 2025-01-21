@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ActionWidget.h"
+#include "UI/ActionWidget.h"
 #include "Components/Button.h"
-#include "TRPGPlayerController.h"
+#include "System/TRPGPlayerController.h"
 
 void UActionWidget::NativeConstruct()
 {

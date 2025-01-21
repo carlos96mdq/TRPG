@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BaseUnit.h"
-#include "TRPGGameStateBase.h"
+#include "Units/BaseUnit.h"
+#include "System/TRPGGameStateBase.h"
 #include "Animation/AnimInstance.h"
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BaseUnit)
 

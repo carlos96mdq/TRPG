@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MMGameModeBase.h"
-#include "MMPlayerController.h"
+#include "System/MMGameModeBase.h"
+#include "System/MMPlayerController.h"
 
 AMMGameModeBase::AMMGameModeBase(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)

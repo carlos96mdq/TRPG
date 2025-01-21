@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SelectedUnitWidget.h"
-#include "TRPGPlayerState.h"
+#include "UI/SelectedUnitWidget.h"
+#include "System/TRPGPlayerState.h"
 #include "Components/TextBlock.h"
-#include "BaseUnit.h"
+#include "Units/BaseUnit.h"
 
 
 void USelectedUnitWidget::NativeConstruct()

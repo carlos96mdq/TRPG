@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MMPlayerController.h"
-#include "MMHUDWidget.h"
+#include "System/MMPlayerController.h"
+#include "UI/MMHUDWidget.h"
 #include "Blueprint/UserWidget.h"
 
 AMMPlayerController::AMMPlayerController()

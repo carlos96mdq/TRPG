@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Combat.h"
+#include "System/PlayerStash.h"
 
 // Sets default values
-ACombat::ACombat()
+APlayerStash::APlayerStash()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -12,14 +12,14 @@ ACombat::ACombat()
 }
 
 // Called when the game starts or when spawned
-void ACombat::BeginPlay()
+void APlayerStash::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ACombat::Tick(float DeltaTime)
+void APlayerStash::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 

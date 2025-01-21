@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Terrain.h"
-#include "TRPGGameStateBase.h"
-#include "BaseTile.h"
-#include "BaseUnit.h"
+#include "Units/Terrain.h"
+#include "System/TRPGGameStateBase.h"
+#include "Units/BaseTile.h"
+#include "Units/BaseUnit.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTerrain, Log, All)
 

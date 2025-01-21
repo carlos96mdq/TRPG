@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "ActiveUnitWidget.h"
+#include "UI/ActiveUnitWidget.h"
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
-#include "TRPGPlayerController.h"
-#include "BaseUnit.h"
+#include "System/TRPGPlayerController.h"
+#include "Units/BaseUnit.h"
 
 void UActiveUnitWidget::NativeConstruct()
 {

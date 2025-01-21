@@ -1,15 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "TRPGPlayerController.h"
-#include "BaseUnit.h"
-#include "BaseTile.h"
-#include "TRPGGameStateBase.h"
-#include "TRPGGameModeBase.h"
-#include "TRPGPlayerState.h"
+#include "System/TRPGPlayerController.h"
+#include "Units/BaseUnit.h"
+#include "Units/BaseTile.h"
+#include "System/TRPGGameStateBase.h"
+#include "System/TRPGGameModeBase.h"
+#include "System/TRPGPlayerState.h"
 #include "Kismet/GameplayStatics.h"
-#include "Terrain.h"
-#include "HUDWidget.h"
+#include "Units/Terrain.h"
+#include "UI/HUDWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "InputMappingContext.h"

@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "TurnOrderWidget.h"
-#include "TRPGGameStateBase.h"
+#include "UI/TurnOrderWidget.h"
+#include "System/TRPGGameStateBase.h"
 #include "Components/Image.h"
-#include "BaseUnit.h"
+#include "Units/BaseUnit.h"
 
 
 void UTurnOrderWidget::NativeConstruct()

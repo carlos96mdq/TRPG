@@ -1,13 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "TRPGGameStateBase.h"
-#include "BaseUnit.h"
-#include "Terrain.h"
-#include "UnitsManager.h"
-#include "NpcController.h"
-#include "TRPGPlayerState.h"
-#include "TRPGGameInstanceSubsystem.h"
+#include "System/TRPGGameStateBase.h"
+#include "Units/BaseUnit.h"
+#include "Units/Terrain.h"
+#include "Units/UnitsManager.h"
+#include "Units/NpcController.h"
+#include "System/TRPGPlayerState.h"
+#include "System/TRPGGameInstanceSubsystem.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTRPGGameState, Log, All)
 

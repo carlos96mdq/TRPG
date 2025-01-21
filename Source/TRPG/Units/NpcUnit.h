@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "BaseUnit.h"
+#include "Units/BaseUnit.h"
 #include "NpcUnit.generated.h"
 
 UENUM()
