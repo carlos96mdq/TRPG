@@ -6,34 +6,25 @@
 #include "System/MMPlayerState.h"
 #include "Components/Image.h"
 #include "Components/Button.h"
-#include "UI/IndexButton.h"
 
 void UMMUnitsSelectionWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	ButtonUnit0->SetIndex(0);
-	ButtonUnit1->SetIndex(1);
-	ButtonUnit2->SetIndex(2);
-
 	ImagesArray.Add(Image0);
 	ImagesArray.Add(Image1);
 	ImagesArray.Add(Image2);
 	
-	ButtonUnit0->OnIndexButtonClicked.AddUObject(this, &UMMUnitsSelectionWidget::SelectUnit);
-	ButtonUnit1->OnIndexButtonClicked.AddUObject(this, &UMMUnitsSelectionWidget::SelectUnit);
-	ButtonUnit2->OnIndexButtonClicked.AddUObject(this, &UMMUnitsSelectionWidget::SelectUnit);
+	ButtonUnit0->OnClicked.AddUniqueDynamic(this, &UMMUnitsSelectionWidget::SelectUnit0);
+	ButtonUnit1->OnClicked.AddUniqueDynamic(this, &UMMUnitsSelectionWidget::SelectUnit1);
+	ButtonUnit2->OnClicked.AddUniqueDynamic(this, &UMMUnitsSelectionWidget::SelectUnit2);
 
 	SetSelectableUnits();
 }
 
 void UMMUnitsSelectionWidget::SetSelectableUnits()
 {
-	// If the widget is hidden, show it
-	if (GetVisibility() != ESlateVisibility::Visible)
-	{
-		SetVisibility(ESlateVisibility::Visible);
-	}
+	SetVisibility(ESlateVisibility::Visible);
 
 	AMMPlayerState* MyPlayerState = GetOwningPlayer<AMMPlayerController>()->GetPlayerState<AMMPlayerState>();
 	check(MyPlayerState);
@@ -48,6 +39,21 @@ void UMMUnitsSelectionWidget::SetSelectableUnits()
 			ImagesArray[i]->SetBrushFromTexture(Icon);
 		}
 	}
+}
+
+void UMMUnitsSelectionWidget::SelectUnit0()
+{
+	SelectUnit(0);
+}
+
+void UMMUnitsSelectionWidget::SelectUnit1()
+{
+	SelectUnit(1);
+}
+
+void UMMUnitsSelectionWidget::SelectUnit2()
+{
+	SelectUnit(2);
 }
 
 void UMMUnitsSelectionWidget::SelectUnit(int32 UnitIndex)

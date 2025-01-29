@@ -28,27 +28,11 @@ void ABaseTile::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	// Bind Mouse left click event with a function
-	OnClicked.AddUniqueDynamic(this, &ABaseTile::OnTileClicked);
-	
 	// Bind Mouse over begin event
 	OnBeginCursorOver.AddUniqueDynamic(this, &ABaseTile::OnTileMouseOver);
 	
 	// Bind Mouse over end event
 	OnEndCursorOver.AddUniqueDynamic(this, &ABaseTile::OnTileMouseOver);
-}
-
-void ABaseTile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
-void ABaseTile::OnTileClicked(AActor* ClickedActor, FKey ButtonPressed)
-{
-	//float PosX = GetActorLocation().X;
-	//float PosY = GetActorLocation().Y;
-	//UE_LOG(LogTemp, Warning, TEXT("Posición del Tile seleccionado: x:%f, y:%f"), PosX, PosY);
 }
 
 void ABaseTile::OnTileMouseOver(AActor* OverActor)

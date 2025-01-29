@@ -3,10 +3,6 @@
 
 #include "System/TRPGGameInstanceSubsystem.h"
 
-void UTRPGGameInstanceSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-}
-
 void UTRPGGameInstanceSubsystem::SetSelectedUnitName(FName NewName)
 {
 	SelectedUnitName = NewName;

@@ -22,10 +22,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	// Called when tile is clicked by mouse
-	UFUNCTION()
-	void OnTileClicked(AActor* ClickedActor, FKey ButtonPressed);
-	
 	// Called when mouse is over this tile
 	UFUNCTION()
 	void OnTileMouseOver(AActor* OverActor);
@@ -55,9 +51,6 @@ protected:
 public:	
 	// Sets default values for this actor's properties
 	ABaseTile();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 	// Set the glowing effect on/off
 	void SetGlowingEffect(bool bNewState=true, int32 EffectIdx=0);

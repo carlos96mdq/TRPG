@@ -61,10 +61,7 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 	LabelArmor->SetText(FText::AsNumber(ActiveUnit->GetArmor()));
 	LabelEnergy->SetText(FText::AsNumber(ActiveUnit->GetEnergy()));
 
-	if (GetVisibility() != ESlateVisibility::Visible)
-	{
-		SetVisibility(ESlateVisibility::Visible);
-	}
+	SetVisibility(ESlateVisibility::Visible);
 
 	if (ActiveUnit->GetUnitState() == EUnitState::Moving || ActiveUnit->GetUnitState() == EUnitState::Combating)
 	{
@@ -96,9 +93,13 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 			UButton* CombatButton = CombatButtons[i];
 
 			if (ActiveUnit->HasActionEquipped(i) && ActiveUnit->GetCombatActionEnergyCost(i) <= UnitEnergy)
+			{
 				CombatButton->SetIsEnabled(true);
+			}
 			else
+			{
 				CombatButton->SetIsEnabled(false);
+			}
 		}
 	}
 }
@@ -106,24 +107,15 @@ void UActiveUnitWidget::UpdateUnitData(ABaseUnit* ActiveUnit)
 void UActiveUnitWidget::ChangeButtonsState(EUnitState NewState)
 {	
 	// Disable buttons according to state
-	switch (NewState)
+	if (NewState == EUnitState::Moving)
 	{
-	case EUnitState::Idle:
-		break;
-	case EUnitState::ReadyToMove:
-		break;
-	case EUnitState::Moving:
 		ButtonMove->SetIsEnabled(false);
-		break;
-	case EUnitState::ReadyToCombat:
-		break;
-	case EUnitState::Combating:
+	}
+	else if (NewState == EUnitState::Combating)
+	{
 		ButtonCombat0->SetIsEnabled(false);
 		ButtonCombat1->SetIsEnabled(false);
 		ButtonCombat2->SetIsEnabled(false);
 		ButtonCombat3->SetIsEnabled(false);
-		break;
-	default:
-		break;
 	}
 }

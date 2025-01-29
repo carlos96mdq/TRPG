@@ -13,7 +13,6 @@ DEFINE_LOG_CATEGORY_STATIC(LogTRPGGameState, Log, All)
 
 ATRPGGameStateBase::ATRPGGameStateBase()
 {
-	// TODO Only for building purpose, this array is going to be hardcoded instead of being filled from a Data Table
 	DamageTypeModifiers = {
 		//None  Bug  Dark  Drag  Elec  Fairy Fight Fire  Fly   Ghost Grass Grou  Norm  Ice   Pois  Psych Rock  Steel Water 
 		{ 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f },	// None

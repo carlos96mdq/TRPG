@@ -67,7 +67,6 @@ public:
 
 struct FUnitInitData
 {
-public:
 	FName Archetype;
 	EUnitControllerOwner ControllerOwner;
 	FTransform Transform;

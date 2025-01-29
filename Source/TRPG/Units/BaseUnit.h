@@ -233,10 +233,6 @@ class TRPG_API ABaseUnit : public AActor
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-	// Called when unit is clicked by mouse
-	UFUNCTION()
-	void OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed);
 	
 	// Called in tick to move unit
 	void Move(float DeltaTime);

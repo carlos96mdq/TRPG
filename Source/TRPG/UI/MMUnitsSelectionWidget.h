@@ -8,7 +8,6 @@
 
 // Forward declarations
 class UButton;
-class UIndexButton;
 class UImage;
 
 /**
@@ -29,19 +28,24 @@ protected:
 	// Binded to available units setting function in PlayerState to refresh its data in this widget
 	void SetSelectableUnits();
 
-	// Select and save a Unit when clicked
 	UFUNCTION()
+	void SelectUnit0();
+	UFUNCTION()
+	void SelectUnit1();
+	UFUNCTION()
+	void SelectUnit2();
+
 	void SelectUnit(int32 UnitIndex);
 
 public:
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UIndexButton* ButtonUnit0;
+	UButton* ButtonUnit0;
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UIndexButton* ButtonUnit1;
+	UButton* ButtonUnit1;
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	UIndexButton* ButtonUnit2;
+	UButton* ButtonUnit2;
 
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	UImage* Image0;

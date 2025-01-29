@@ -20,8 +20,6 @@ void AMMPlayerState::BeginPlay()
 	MyUnits.Emplace("Charmander");
 	MyUnits.Emplace("Squirtle");
 
-	OnSelectableUnitsGet.Broadcast();
-
 	// Create selected unit model and spawn in the world
 	SelectedUnitModel = GetWorld()->SpawnActor<AUnitModel>(FVector(0.0f, 0.0f, 50.0f), FRotator(0.0f, 0.0f, 0.0f));
 

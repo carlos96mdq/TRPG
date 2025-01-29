@@ -12,16 +12,6 @@ AMMPlayerController::AMMPlayerController()
     bEnableMouseOverEvents = true;
 }
 
-void AMMPlayerController::SetupInputComponent()
-{
-    Super::SetupInputComponent();
-}
-
-void AMMPlayerController::BeginPlay()
-{
-    Super::BeginPlay();
-}
-
 void AMMPlayerController::ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData)
 {
     HUDWidget = CreateWidget<UMMHUDWidget>(this, HUDWidgetClass);

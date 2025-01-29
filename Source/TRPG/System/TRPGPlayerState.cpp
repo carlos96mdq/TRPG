@@ -198,8 +198,3 @@ void ATRPGPlayerState::ChangeState(EUnitState NewState, int32 ActionPosition)
 		break;
 	}
 }
-
-void ATRPGPlayerState::CheckMovement(UUserWidget* ActiveUnitWidget)
-{
-}
-

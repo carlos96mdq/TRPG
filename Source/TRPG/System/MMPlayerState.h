@@ -7,12 +7,8 @@
 #include "MMPlayerState.generated.h"
 
 // Forward declarations
-class UButton;
-class UImage;
 class UDataTable;
 class AUnitModel;
-
-DECLARE_MULTICAST_DELEGATE(FOnSelectableUnitsGet)
 
 /**
  * 
@@ -39,8 +35,6 @@ protected:
 	UDataTable* UnitsTable;
 
 public:
-	FOnSelectableUnitsGet OnSelectableUnitsGet;
-
 	// Set the Selected Unit Model
 	void SetSelectedUnit(int32 UnitIndex);
 

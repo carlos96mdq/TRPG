@@ -6,6 +6,13 @@
 #include "Animation/AnimInstance.h"
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BaseUnit)
 
+static TAutoConsoleVariable<int32> CVarUnitsDebugLines(
+	TEXT("Game.UnitsDebugLines"),
+	0,
+	TEXT("If 1, the units draw color begugging lines in its forward and right vector. \n"),
+	ECVF_Default
+);
+
 ABaseUnit::ABaseUnit()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -106,9 +113,6 @@ void ABaseUnit::TurnEnds()
 	}
 }
 
-void ABaseUnit::OnUnitClicked(AActor* ClickedActor, FKey ButtonPressed)
-{}
-
 void ABaseUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -122,9 +126,13 @@ void ABaseUnit::Tick(float DeltaTime)
 		UseCurrentAction(CurrentObjective);
 	}
 
-	//UE_LOG(LogTemp, Warning, TEXT("La Velocidad de mi unidad es: x: %x, y: %y, z: %z"));
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 300, FColor::Red, false, 2.0f, 0, 1.0f);
-	DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorRightVector() * 300, FColor::Green, false, 2.0f, 0, 1.0f);
+	
+	if (CVarUnitsDebugLines.GetValueOnGameThread() == 1)
+	{
+		UE_LOG(LogTemp, Display, TEXT("[UNIT ACTION] UnitsDebugLines active"));
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorForwardVector() * 300, FColor::Red, false, 2.0f, 0, 1.0f);
+		DrawDebugLine(GetWorld(), GetActorLocation(), GetActorLocation() + GetActorRightVector() * 300, FColor::Green, false, 2.0f, 0, 1.0f);
+	}
 }
 
 void ABaseUnit::MoveUnit(FVector FinalDestination)

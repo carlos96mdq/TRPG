@@ -35,9 +35,16 @@ void ATRPGPlayerController::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
 
-    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnGameStarts.AddUObject(this, &ATRPGPlayerController::RegisterAllUnits);
-    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnNewTurnStarts.AddUObject(this, &ATRPGPlayerController::NewTurnStarts);
-    GetWorld()->GetGameState<ATRPGGameStateBase>()->OnGameOver.AddUObject(this, &ATRPGPlayerController::GameOver);
+    if (ATRPGGameStateBase* MyGameState = GetWorld()->GetGameState<ATRPGGameStateBase>())
+    {
+        MyGameState->OnGameStarts.AddUObject(this, &ATRPGPlayerController::RegisterAllUnits);
+        MyGameState->OnNewTurnStarts.AddUObject(this, &ATRPGPlayerController::NewTurnStarts);
+        MyGameState->OnGameOver.AddUObject(this, &ATRPGPlayerController::GameOver);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ATRPGGameStateBase couldn't be found"));
+    }
 }
 
 void ATRPGPlayerController::SetupInputComponent()

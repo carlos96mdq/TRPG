@@ -16,20 +16,16 @@ void UActionWidget::NativeConstruct()
 
 void UActionWidget::CombatPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Combat button pressed"));
-	// TODO en esta parte en realidad debería darse la orden de abrir un submenu, elegir el ataque o habilidad a usar y luego si hacer la invocación de abajo para usar esa CombatAction
 	GetOwningPlayer<ATRPGPlayerController>()->OnCombatAction(0);
 }
 
 void UActionWidget::MovePressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Move button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnMoveAction();
 }
 
 void UActionWidget::EndTurnPressed()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Wait button pressed"));
 	GetOwningPlayer<ATRPGPlayerController>()->OnEndTurnAction();
 }
 

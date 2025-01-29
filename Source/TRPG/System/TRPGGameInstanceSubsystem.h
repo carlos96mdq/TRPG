@@ -17,10 +17,10 @@ class TRPG_API UTRPGGameInstanceSubsystem : public UGameInstanceSubsystem
 	FName SelectedUnitName = "Default";
 
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override {};
 	virtual void Deinitialize() override {};
 
 	void SetSelectedUnitName(FName NewName);
 
-	FName GetSelectedUnitName() { return SelectedUnitName; }
+	FName GetSelectedUnitName() const { return SelectedUnitName; }
 };

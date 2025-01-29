@@ -69,9 +69,6 @@ public:
 	// Change the CurrentState
 	void ChangeState(EUnitState NewState, int32 ActionPosition = -1);
 
-	// Called by widget when move button is pressed
-	void CheckMovement(UUserWidget* CombatPlayerWidget);
-
 	// Delegate declaration
 	FOnUnitSelected OnUnitSelected;
 	FOnStateChanged OnStateChanged;

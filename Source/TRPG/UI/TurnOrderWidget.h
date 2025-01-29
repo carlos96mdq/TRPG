@@ -18,13 +18,6 @@ class TRPG_API UTurnOrderWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	
-protected:
-	// Called when the game starts or when spawned
-	virtual void NativeConstruct() override;
-
-	//// Binded to ActiveUnit setting function in GameState to refresh its data in this widget
-	//void SetTurnOrder(ABaseUnit* ActiveUnit);
-
 public:
 	// Labels
 	UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
