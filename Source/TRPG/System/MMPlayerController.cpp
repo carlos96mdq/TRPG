@@ -12,9 +12,9 @@ AMMPlayerController::AMMPlayerController()
     bEnableMouseOverEvents = true;
 }
 
-void AMMPlayerController::ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData)
+void AMMPlayerController::ShowPlayerMatchesRecordData(UMySaveGame* LoadedData)
 {
     HUDWidget = CreateWidget<UMMHUDWidget>(this, HUDWidgetClass);
     HUDWidget->AddToViewport();
-    HUDWidget->SetPlayerMatchesRecordData(PlayerMatchesRecordData);
+    HUDWidget->SetPlayerMatchesRecordData(LoadedData);
 }

@@ -73,17 +73,9 @@ void AMMPlayerState::LoadPlayerMatchesRecord()
 	{
 		SaveGameInstance = Cast<UMySaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("PlayerSaveSlot"), 0));
 
-		TArray<int> LoadedData = {
-			SaveGameInstance->MatchesPlayed,
-			SaveGameInstance->MatchesWon,
-			SaveGameInstance->MatchesLost,
-			SaveGameInstance->UnitsDefeated,
-			SaveGameInstance->UnitsLost
-		};
-
 		if (AMMPlayerController* MyPlayerController = Cast<AMMPlayerController>(GetPlayerController()))
 		{
-			MyPlayerController->ShowPlayerMatchesRecordData(LoadedData);
+			MyPlayerController->ShowPlayerMatchesRecordData(SaveGameInstance);
 		}
 	}
 }

@@ -6,6 +6,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Kismet/GameplayStatics.h"
+#include "System/MySaveGame.h"
 
 void UMMHUDWidget::NativeConstruct()
 {
@@ -23,20 +24,19 @@ void UMMHUDWidget::PlayPressed()
 	LoadScreen->SetVisibility(ESlateVisibility::Visible);
 
 	// Starts the new level
-	// TODO: Esto lo handleo directamente acá para hacer pruebas. Lo ideal sería que esto vaya al PlayerController y este se encargara de mandar la orden
+	// TODO: This should be done in PlayerController
 	UGameplayStatics::OpenLevel(GetWorld(), FName("Main"), true);
 	//UGameplayStatics::LoadStreamLevel(GetWorld(), FName("Main"), true, true, FLatentActionInfo());
 }
 
-void UMMHUDWidget::SetPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData)
+void UMMHUDWidget::SetPlayerMatchesRecordData(UMySaveGame* LoadedData)
 {
-	if (PlayerMatchesRecordData.Num() >= 5)
+	if (LoadedData)
 	{
-		// The array is always received with the variables already sorted
-		MatchesPlayedValue->SetText(FText::AsNumber(PlayerMatchesRecordData[0]));
-		MatchesWonValue->SetText(FText::AsNumber(PlayerMatchesRecordData[1]));
-		MatchesLostValue->SetText(FText::AsNumber(PlayerMatchesRecordData[2]));
-		UnitsDefeatedValue->SetText(FText::AsNumber(PlayerMatchesRecordData[3]));
-		UnitsLostValue->SetText(FText::AsNumber(PlayerMatchesRecordData[4]));
+		MatchesPlayedValue->SetText(FText::AsNumber(LoadedData->MatchesPlayed));
+		MatchesWonValue->SetText(FText::AsNumber(LoadedData->MatchesWon));
+		MatchesLostValue->SetText(FText::AsNumber(LoadedData->MatchesLost));
+		UnitsDefeatedValue->SetText(FText::AsNumber(LoadedData->UnitsDefeated));
+		UnitsLostValue->SetText(FText::AsNumber(LoadedData->UnitsLost));
 	}
 }

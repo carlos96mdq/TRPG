@@ -8,7 +8,7 @@
 
 // Forward declarations
 class UMMHUDWidget;
-
+class UMySaveGame;
 
 /**
  * 
@@ -28,5 +28,5 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UUserWidget> HUDWidgetClass;
 
-	void ShowPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData);
+	void ShowPlayerMatchesRecordData(UMySaveGame* LoadedData);
 };

@@ -46,8 +46,6 @@ void ATRPGGameStateBase::BeginPlay()
 	UnitsManager = NewObject<UUnitsManager>(this);
 	NpcController = GetWorld()->SpawnActor<ANpcController>();
 
-	GetWorld()->GetFirstPlayerController()->GetPlayerState<ATRPGPlayerState>()->SetTerrain(Terrain);
-
 	// Get Unit selected by Player in MainMenu
 	FName SelectedUnitName = GetGameInstance()->GetSubsystem<UTRPGGameInstanceSubsystem>()->GetSelectedUnitName();
 

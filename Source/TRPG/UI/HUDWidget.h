@@ -50,9 +50,6 @@ public:
 	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
 	//UImage* LoadScreen;
 
-	//UPROPERTY(meta = (BindWidget), BlueprintReadOnly)
-	//UButton* PlayButton;
-
 	void SetPlayerTurn(bool bIsPlayerTurn);
 	void CreateUnitDataWidget(ABaseUnit* Unit, const TSubclassOf<UUnitDataIcon>& UnitDataIconClass, bool IsThisPlayer);
 	void UpdateUnitData(ABaseUnit* Unit);

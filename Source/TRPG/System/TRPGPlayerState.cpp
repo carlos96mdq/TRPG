@@ -83,13 +83,6 @@ void ATRPGPlayerState::SavePlayerResults()
 	UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("PlayerSaveSlot"), 0);
 }
 
-
-void ATRPGPlayerState::SetTerrain(UTerrain* TerrainPointer)
-{
-	check(TerrainPointer)
-	Terrain = TerrainPointer;
-}
-
 void ATRPGPlayerState::SetActiveUnit(ABaseUnit* NewActiveUnit)
 {
 	ActiveUnit = NewActiveUnit;
@@ -100,6 +93,15 @@ void ATRPGPlayerState::ProcessClick(FHitResult& HitResult)
 	// If there is not yet an active unit, it means the the game has nor started yet
 	if (ActiveUnit == nullptr)
 	{
+		return;
+	}
+
+	ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+	UTerrain* Terrain = GameState->GetTerrain();
+
+	if (Terrain == nullptr)
+	{
+		UE_LOG(LogPlayerState, Warning, TEXT("OnNewTurnStarts Broadcast from StartGame()"));
 		return;
 	}
 
@@ -175,6 +177,14 @@ void ATRPGPlayerState::ChangeState(EUnitState NewState, int32 ActionPosition)
 	// If there is not yet an active unit, it means the the game has nor started yet
 	if (ActiveUnit == nullptr)
 	{
+		return;
+	}
+
+	ATRPGGameStateBase* GameState = GetWorld()->GetGameState<ATRPGGameStateBase>();
+	UTerrain* Terrain = GameState->GetTerrain();
+	if (Terrain == nullptr)
+	{
+		UE_LOG(LogPlayerState, Warning, TEXT("OnNewTurnStarts Broadcast from StartGame()"));
 		return;
 	}
 

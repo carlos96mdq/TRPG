@@ -11,6 +11,7 @@ class UMMUnitsSelectionWidget;
 class UButton;
 class UImage;
 class UTextBlock;
+class UMySaveGame;
 
 /**
  * 
@@ -52,5 +53,5 @@ public:
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* UnitsLostValue;
 
-	void SetPlayerMatchesRecordData(const TArray<int32>& PlayerMatchesRecordData);
+	void SetPlayerMatchesRecordData(UMySaveGame* LoadedData);
 };
